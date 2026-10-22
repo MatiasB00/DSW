@@ -15,7 +15,8 @@ Portal web de un comercio de imporenta mayorista, desde el cual se pueden crear 
 
 ### Modelo
 
-(url del der)
+<img width="1247" height="562" alt="image" src="https://github.com/user-attachments/assets/3c586559-a8ef-4b44-8648-9099f79d0e9d" />
+
 
 ## Alcance Funcional 
 
