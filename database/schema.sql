@@ -14,13 +14,28 @@ CREATE TABLE IF NOT EXISTS Usuario (
   UNIQUE KEY uq_usuario_email (email)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS Proveedor (
+  IDProveedor INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  cuit VARCHAR(20) NOT NULL,
+  razonSocial VARCHAR(150) NOT NULL,
+  email VARCHAR(254) NOT NULL,
+  telefono VARCHAR(50) NULL,
+  direccion VARCHAR(255) NULL,
+  PRIMARY KEY (IDProveedor),
+  UNIQUE KEY uq_proveedor_cuit (cuit),
+  UNIQUE KEY uq_proveedor_email (email)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS Producto (
   IDProducto INT UNSIGNED NOT NULL AUTO_INCREMENT,
   nombre VARCHAR(150) NOT NULL,
   descripcion TEXT NOT NULL,
-  precio DECIMAL(12, 2) NOT NULL,
+  IDProveedor INT UNSIGNED NOT NULL,
   PRIMARY KEY (IDProducto),
-  CONSTRAINT chk_producto_precio CHECK (precio >= 0)
+  KEY idx_producto_proveedor (IDProveedor),
+  CONSTRAINT fk_producto_proveedor
+    FOREIGN KEY (IDProveedor) REFERENCES Proveedor (IDProveedor)
+    ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS Pedido (
@@ -76,4 +91,15 @@ CREATE TABLE IF NOT EXISTS ProdPed (
     ON UPDATE CASCADE ON DELETE RESTRICT,
   CONSTRAINT chk_prodped_cantidad CHECK (cantidad > 0),
   CONSTRAINT chk_prodped_subtotal CHECK (subtotal >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS Precio (
+  IDProducto INT UNSIGNED NOT NULL,
+  fechaDesde DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  valor DECIMAL(12, 2) NOT NULL,
+  PRIMARY KEY (IDProducto, fechaDesde),
+  CONSTRAINT fk_precio_producto
+    FOREIGN KEY (IDProducto) REFERENCES Producto (IDProducto)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT chk_precio_valor CHECK (valor >= 0)
 ) ENGINE=InnoDB;

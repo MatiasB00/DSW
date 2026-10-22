@@ -2,6 +2,8 @@ import { ServerRoute } from '@hapi/hapi';
 import Joi from 'joi';
 import * as catalogController from './controllers/catalogController';
 import * as orderController from './controllers/orderController';
+import * as priceController from './controllers/priceController';
+
 
 const idParams = Joi.object({
   id: Joi.number().integer().positive().max(4294967295).required(),
@@ -19,10 +21,22 @@ const usuarioSchema = Joi.object({
   rol: Joi.string().trim().min(1).max(30).required(),
 });
 
+const proveedorSchema = Joi.object({
+  cuit: Joi.string().trim().min(1).max(20).required(),
+  razonSocial: Joi.string().trim().min(1).max(150).required(),
+  email: Joi.string().trim().email().max(254).required(),
+  telefono: Joi.string().trim().max(50).allow('', null).optional(),
+  direccion: Joi.string().trim().max(255).allow('', null).optional(),
+});
+
 const productoSchema = Joi.object({
   nombre: Joi.string().trim().min(1).max(150).required(),
   descripcion: Joi.string().allow('').required(),
-  precio: Joi.number().precision(2).min(0).max(9999999999.99).required(),
+  IDProveedor: Joi.number().integer().positive().required(),
+});
+
+const precioSchema = Joi.object({
+  valor: Joi.number().precision(2).min(0).max(9999999999.99).required(),
 });
 
 const orderFields = {
@@ -81,7 +95,7 @@ const updatePrintSchema = Joi.object({
 
 function catalogRoutes(
   path: string,
-  resource: 'usuarios' | 'productos',
+  resource: 'usuarios' | 'productos' | 'proveedores',
   schema: Joi.ObjectSchema,
 ): ServerRoute[] {
   return [
@@ -115,8 +129,21 @@ function catalogRoutes(
 
 export const routes: ServerRoute[] = [
   ...catalogRoutes('usuarios', 'usuarios', usuarioSchema),
+  ...catalogRoutes('proveedores', 'proveedores', proveedorSchema),
   ...catalogRoutes('productos', 'productos', productoSchema),
   { method: 'GET', path: '/api/pedidos', handler: orderController.list },
+  {
+    method: 'GET',
+    path: '/api/productos/{id}/precios',
+    options: { validate: { params: idParams } },
+    handler: priceController.getHistorial,
+  },
+  {
+    method: 'POST',
+    path: '/api/productos/{id}/precios',
+    options: { validate: { params: idParams, payload: precioSchema } },
+    handler: priceController.create,
+  },
   {
     method: 'GET',
     path: '/api/pedidos/{id}',
