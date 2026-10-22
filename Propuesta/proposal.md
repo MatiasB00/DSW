@@ -2,7 +2,7 @@
 
 ## Grupo
 ### Integrantes
-* legajo - Matias Bilicich
+* 48009 - Matias Bilicich
 * 50301 - Franco Sartirana
 
 ### Repositorios
