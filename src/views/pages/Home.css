@@ -1,4 +1,4 @@
-/* Mobile-First Base */
+
 .home-container {
   min-block-size: calc(100dvh - 72px);
   background-image: url('../assets/images/wpp.webp');

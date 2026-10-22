@@ -1,8 +1,5 @@
 /* Mobile-First Base */
 .navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
   inline-size: 100%;
   background-color: #fffdfa;
   border-bottom: 1px solid #ebdcd0;
@@ -67,7 +64,7 @@
   background-color: #991b1b;
 }
 
-/* Tablet / Desktop */
+
 @media (min-width: 768px) {
   .navbar {
     flex-direction: row;
