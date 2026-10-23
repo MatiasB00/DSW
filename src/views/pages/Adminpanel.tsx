@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { ProductForm, Producto } from '../components/ProductForm';
+import { ProveedoresForm, Proveedor } from '../components/ProveedoresForm';
 import './Adminpanel.css';
 
 export function Adminpanel() {
+    const [pestanaActiva, setPestanaActiva] = useState<'productos' | 'proveedores'>('productos');
+
+
     const [productos, setProductos] = useState<Producto[]>([]);
-    const [cargandoLista, setCargandoLista] = useState(true);
+    const [cargandoProductos, setCargandoProductos] = useState(true);
     const [productoAEditar, setProductoAEditar] = useState<Producto | null>(null);
 
+
+    const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+    const [cargandoProveedores, setCargandoProveedores] = useState(true);
+    const [proveedorAEditar, setProveedorAEditar] = useState<Proveedor | null>(null);
+    const [busquedaProveedor, setBusquedaProveedor] = useState('');
+
     const cargarProductos = async () => {
-        setCargandoLista(true);
+        setCargandoProductos(true);
         try {
             const response = await fetch('/api/productos');
             if (response.ok) {
@@ -18,15 +28,31 @@ export function Adminpanel() {
         } catch (error) {
             console.error('Error al cargar productos:', error);
         } finally {
-            setCargandoLista(false);
+            setCargandoProductos(false);
+        }
+    };
+
+    const cargarProveedores = async () => {
+        setCargandoProveedores(true);
+        try {
+            const response = await fetch('/api/proveedores');
+            if (response.ok) {
+                const data = await response.json();
+                setProveedores(data);
+            }
+        } catch (error) {
+            console.error('Error al cargar proveedores:', error);
+        } finally {
+            setCargandoProveedores(false);
         }
     };
 
     useEffect(() => {
         cargarProductos();
+        cargarProveedores();
     }, []);
 
-    const handleEliminar = async (id: number, nombre: string) => {
+    const handleEliminarProducto = async (id: number, nombre: string) => {
         const confirmar = window.confirm(`¿Estás seguro de que deseas eliminar "${nombre}"?`);
         if (!confirmar) return;
 
@@ -40,7 +66,6 @@ export function Adminpanel() {
                 throw new Error(errorData.message || 'No se pudo eliminar el producto.');
             }
 
-            // Si estábamos editando justo el producto que se borró, limpiamos el formulario
             if (productoAEditar?.IDProducto === id) {
                 setProductoAEditar(null);
             }
@@ -51,87 +76,244 @@ export function Adminpanel() {
         }
     };
 
+    const handleEliminarProveedor = async (id: number, razonSocial: string) => {
+        const confirmar = window.confirm(
+            `¿Estás seguro de que deseas eliminar al proveedor "${razonSocial}"?`
+        );
+        if (!confirmar) return;
+
+        try {
+            const response = await fetch(`/api/proveedores/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(
+                    errorData.message || 'No se pudo eliminar el proveedor. Verifica que no tenga productos asociados.'
+                );
+            }
+
+            if (proveedorAEditar?.IDProveedor === id) {
+                setProveedorAEditar(null);
+            }
+
+            cargarProveedores();
+        } catch (error: any) {
+            alert(error.message || 'Error al eliminar el proveedor.');
+        }
+    };
+
+    const proveedoresFiltrados = proveedores.filter((prov) =>
+        prov.razonSocial.toLowerCase().includes(busquedaProveedor.toLowerCase()) ||
+        prov.cuit.includes(busquedaProveedor)
+    );
+
     return (
         <main className="admin-container">
             <header className="admin-header">
                 <h2 className="admin-title">Panel de Administración</h2>
                 <p className="admin-subtitle">
-                    Gestión integral de productos e insumos mayoristas
+                    Gestión integral de catálogo, precios y proveedores mayoristas
                 </p>
+
+                {/* Navegación por Pestañas */}
+                <div className="admin-tabs-bar">
+                    <button
+                        type="button"
+                        className={`admin-tab-btn ${pestanaActiva === 'productos' ? 'active' : ''}`}
+                        onClick={() => setPestanaActiva('productos')}
+                    >
+                        Productos ({productos.length})
+                    </button>
+                    <button
+                        type="button"
+                        className={`admin-tab-btn ${pestanaActiva === 'proveedores' ? 'active' : ''}`}
+                        onClick={() => setPestanaActiva('proveedores')}
+                    >
+                        Proveedores ({proveedores.length})
+                    </button>
+                </div>
             </header>
 
-            {/* Componente Modular de Formulario */}
-            <section className="admin-section">
-                <ProductForm
-                    productoAEditar={productoAEditar}
-                    onGuardarExito={cargarProductos}
-                    onCancelarEdicion={() => setProductoAEditar(null)}
-                />
-            </section>
+            {/* VISTA 1: GESTIÓN DE PRODUCTOS */}
+            {pestanaActiva === 'productos' && (
+                <>
+                    {/* Formulario autónomo */}
+                    <ProductForm
+                        productoAEditar={productoAEditar}
+                        onGuardarExito={() => {
+                            cargarProductos();
+                            setProductoAEditar(null);
+                        }}
+                        onCancelarEdicion={() => setProductoAEditar(null)}
+                    />
 
-            {/* Catálogo de Productos con Acciones */}
-            <section className="admin-section">
-                <h3 className="section-title">
-                    <span></span> Productos en el Catálogo ({productos.length})
-                </h3>
+                    {/* Catálogo de Productos */}
+                    <section className="admin-section">
+                        <div className="section-header-row">
+                            <h3 className="section-title">
+                                Productos en el Catálogo ({productos.length})
+                            </h3>
+                        </div>
 
-                {cargandoLista ? (
-                    <p className="empty-state">Cargando productos de la base de datos...</p>
-                ) : productos.length === 0 ? (
-                    <p className="empty-state">
-                        No hay productos registrados en el catálogo aún.
-                    </p>
-                ) : (
-                    <div className="products-grid">
-                        {productos.map((prod) => (
-                            <article key={prod.IDProducto} className="product-item-card">
-                                <div>
-                                    <div className="product-item-header">
-                                        <h4 className="product-item-name">{prod.nombre}</h4>
-                                        <span className="product-badge-id">#{prod.IDProducto}</span>
-                                    </div>
-                                    <p className="product-item-desc">
-                                        {prod.descripcion || 'Sin descripción.'}
-                                    </p>
-                                </div>
+                        {cargandoProductos ? (
+                            <p className="empty-state">Cargando productos de la base de datos...</p>
+                        ) : productos.length === 0 ? (
+                            <p className="empty-state">
+                                No hay productos registrados en el catálogo aún.
+                            </p>
+                        ) : (
+                            <div className="products-grid">
+                                {productos.map((prod) => (
+                                    <article key={prod.IDProducto} className="product-item-card">
+                                        <div>
+                                            <div className="product-item-header">
+                                                <h4 className="product-item-name">{prod.nombre}</h4>
+                                            </div>
 
-                                <div>
-                                    <div className="product-item-footer">
-                                        <span className="product-item-price-label">Precio</span>
-                                        <span className="product-item-price">
-                                            ${Number(prod.precio).toLocaleString('es-AR', {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
-                                            })}
-                                        </span>
-                                    </div>
+                                            {/* Proveedor asociado */}
+                                            <div className="product-item-prov">
+                                                {prod.proveedorNombre || 'Proveedor no especificado'}
+                                            </div>
 
-                                    {/* Botones de Acción */}
-                                    <div className="product-item-actions">
-                                        <button
-                                            type="button"
-                                            className="btn-card-action btn-card-edit"
-                                            onClick={() => {
-                                                setProductoAEditar(prod);
-                                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                                            }}
-                                        >
-                                            ✏️ Editar
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn-card-action btn-card-delete"
-                                            onClick={() => handleEliminar(prod.IDProducto, prod.nombre)}
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
-                )}
-            </section>
+                                            <p className="product-item-desc">
+                                                {prod.descripcion || 'Sin descripción.'}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <div className="product-item-footer">
+                                                <span className="product-item-price-label">Precio Vigente</span>
+                                                <span className="product-item-price">
+                                                    ${Number(prod.precio).toLocaleString('es-AR', {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    })}
+                                                </span>
+                                            </div>
+
+                                            <div className="product-item-actions">
+                                                <button
+                                                    type="button"
+                                                    className="btn-card-action btn-card-edit"
+                                                    onClick={() => {
+                                                        setProductoAEditar(prod);
+                                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                    }}
+                                                >
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn-card-action btn-card-delete"
+                                                    onClick={() => handleEliminarProducto(prod.IDProducto, prod.nombre)}
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </>
+            )}
+
+            {/* VISTA 2: GESTIÓN DE PROVEEDORES */}
+            {pestanaActiva === 'proveedores' && (
+                <>
+                    {/* Formulario autónomo */}
+                    <ProveedoresForm
+                        proveedorAEditar={proveedorAEditar}
+                        onGuardarExito={() => {
+                            cargarProveedores();
+                            setProveedorAEditar(null);
+                        }}
+                        onCancelarEdicion={() => setProveedorAEditar(null)}
+                    />
+
+                    {/* Catálogo de Proveedores */}
+                    <section className="admin-section">
+                        <div className="section-header-row">
+                            <h3 className="section-title">
+                                Proveedores Registrados ({proveedoresFiltrados.length})
+                            </h3>
+
+                            {/* Barra de Búsqueda */}
+                            <div className="search-box-container">
+                                <input
+                                    type="text"
+                                    className="search-box-input"
+                                    placeholder="Buscar por razón social o CUIT..."
+                                    value={busquedaProveedor}
+                                    onChange={(e) => setBusquedaProveedor(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {cargandoProveedores ? (
+                            <p className="empty-state">Cargando proveedores de la base de datos...</p>
+                        ) : proveedores.length === 0 ? (
+                            <p className="empty-state">
+                                No hay proveedores registrados todavía.
+                            </p>
+                        ) : proveedoresFiltrados.length === 0 ? (
+                            <p className="empty-state">
+                                No se encontraron proveedores que coincidan con la búsqueda.
+                            </p>
+                        ) : (
+                            <div className="suppliers-grid">
+                                {proveedoresFiltrados.map((prov) => (
+                                    <article key={prov.IDProveedor} className="supplier-item-card">
+                                        <div>
+                                            <div className="supplier-item-header">
+                                                <h4 className="supplier-item-name">{prov.razonSocial}</h4>
+                                            </div>
+
+                                            <ul className="supplier-info-list">
+                                                <li>
+                                                    <strong>Cuit:</strong> {prov.cuit}
+                                                </li>
+                                                <li>
+                                                    <strong>Email:</strong> {prov.email}
+                                                </li>
+                                                <li>
+                                                    <strong>Teléfono:</strong> {prov.telefono || 'No especificado'}
+                                                </li>
+                                                <li>
+                                                    <strong>Dirección:</strong> {prov.direccion || 'No especificada'}
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div className="supplier-item-actions">
+                                            <button
+                                                type="button"
+                                                className="btn-card-action btn-card-edit"
+                                                onClick={() => {
+                                                    setProveedorAEditar(prov);
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                }}
+                                            >
+                                                Editar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-card-action btn-card-delete"
+                                                onClick={() => handleEliminarProveedor(prov.IDProveedor, prov.razonSocial)}
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </>
+            )}
         </main>
     );
 }
