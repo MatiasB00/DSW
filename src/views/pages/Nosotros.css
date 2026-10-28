@@ -46,8 +46,6 @@
   text-align: left;
 }
 
-
-/* Tablet y Desktop */
 @media (min-width: 640px) {
   .nosotros-container {
     padding-inline: 2rem;

@@ -1,63 +1,50 @@
 .product-form-card {
     background-color: #fffdfa;
     border: 1px solid #ebdcd0;
-    border-radius: 8px;
-    padding-inline: 1.25rem;
+    border-radius: 10px;
+    padding-inline: 1.5rem;
     padding-block: 1.75rem;
-    box-shadow: 0 4px 12px rgba(60, 40, 30, 0.04);
+    box-shadow: 0 4px 16px rgba(60, 40, 30, 0.04);
+    margin-block-end: 2rem;
 }
 
-.form-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-block-end: 1.25rem;
-    border-bottom: 1px solid #ebdcd0;
-    padding-block-end: 0.75rem;
+.product-form-header {
+    margin-block-end: 1.5rem;
+    text-align: left;
 }
 
-.form-title {
-    font-size: 1.25rem;
+.product-form-title {
+    font-size: 1.35rem;
     font-weight: 700;
     color: #2b211b;
+    margin-block-end: 0.25rem;
 }
 
-.btn-cancelar-top {
-    background: transparent;
-    border: none;
-    color: #b91c1c;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
+.product-form-subtitle {
+    font-size: 0.9rem;
+    color: #736257;
 }
 
-.btn-cancelar-top:hover {
-    text-decoration: underline;
-}
-
-.admin-form {
-    display: flex;
-    flex-direction: column;
+.product-form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 1.25rem;
 }
 
-.form-group {
+.form-group-item {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
     text-align: left;
 }
 
-.form-label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #2b211b;
+.field-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #55453b;
 }
 
-.form-input {
-    inline-size: 100%;
+.field-control {
     padding-inline: 0.85rem;
     padding-block: 0.65rem;
     border: 1px solid #ebdcd0;
@@ -66,101 +53,96 @@
     color: #2b211b;
     font-size: 0.95rem;
     outline: none;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    inline-size: 100%;
     box-sizing: border-box;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-input:focus {
+.field-control:focus {
     border-color: #b91c1c;
-    box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
     background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
 }
 
-.form-textarea {
+.field-textarea {
     resize: vertical;
-    min-block-size: 85px;
+    min-block-size: 75px;
 }
 
-.form-actions {
+.form-actions-bar {
     display: flex;
-    flex-direction: column;
+    justify-content: flex-end;
     gap: 0.75rem;
     margin-block-start: 0.5rem;
 }
 
-.btn-admin-submit {
-    inline-size: 100%;
-    padding-block: 0.75rem;
+.btn-save-submit {
     background-color: #b91c1c;
     color: #ffffff;
+    padding-inline: 1.5rem;
+    padding-block: 0.75rem;
     border: none;
     border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-.btn-admin-submit:hover:not(:disabled) {
+.btn-save-submit:hover:not(:disabled) {
     background-color: #991b1b;
 }
 
-.btn-admin-submit:disabled {
+.btn-save-submit:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-.btn-admin-cancel {
-    inline-size: 100%;
+.btn-cancel-action {
+    background-color: #f3ece4;
+    color: #55453b;
+    padding-inline: 1.25rem;
     padding-block: 0.75rem;
-    background-color: #ebdcd0;
-    color: #4a3b32;
-    border: none;
+    border: 1px solid #ebdcd0;
     border-radius: 6px;
+    font-weight: 700;
     font-size: 0.95rem;
-    font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
 
-.btn-admin-cancel:hover:not(:disabled) {
-    background-color: #dfcdbf;
+.btn-cancel-action:hover {
+    background-color: #ebdcd0;
 }
 
-.alert-box {
+.form-feedback-alert {
     padding-inline: 1rem;
     padding-block: 0.75rem;
     border-radius: 6px;
-    font-size: 0.95rem;
-    font-weight: 500;
+    font-size: 0.9rem;
+    font-weight: 600;
     margin-block-end: 1.25rem;
+    text-align: left;
 }
 
-.alert-exito {
-    background-color: #ecfdf5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
+.feedback-exito {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
 }
 
-.alert-error {
+.feedback-error {
     background-color: #fef2f2;
     color: #991b1b;
     border: 1px solid #fecaca;
 }
 
 @media (min-width: 640px) {
-    .product-form-card {
-        padding-inline: 2rem;
-        padding-block: 2.25rem;
+    .product-form-grid {
+        grid-template-columns: 1fr 1fr;
     }
 
-    .form-actions {
-        flex-direction: row;
-    }
-
-    .btn-admin-submit,
-    .btn-admin-cancel {
-        inline-size: auto;
-        padding-inline: 1.75rem;
+    .full-width {
+        grid-column: 1 / -1;
     }
 }

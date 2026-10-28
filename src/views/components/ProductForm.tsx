@@ -6,6 +6,8 @@ export interface Producto {
     nombre: string;
     descripcion: string;
     precio: number | string;
+    IDProveedor?: number;
+    proveedorNombre?: string;
 }
 
 interface ProductFormProps {
@@ -18,155 +20,198 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
     const [nombre, setNombre] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [precio, setPrecio] = useState('');
+    const [idProveedor, setIdProveedor] = useState<number | ''>('');
+    const [proveedores, setProveedores] = useState<Array<{ IDProveedor: number; razonSocial: string }>>([]);
     const [cargando, setCargando] = useState(false);
     const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
 
+    useEffect(() => {
+        fetch('/api/proveedores')
+            .then((res) => res.json())
+            .then((data) => setProveedores(data))
+            .catch((err) => console.error('Error al cargar proveedores:', err));
+    }, []);
 
     useEffect(() => {
         if (productoAEditar) {
             setNombre(productoAEditar.nombre);
             setDescripcion(productoAEditar.descripcion || '');
             setPrecio(String(productoAEditar.precio));
+            setIdProveedor(productoAEditar.IDProveedor || '');
             setMensaje(null);
         } else {
             setNombre('');
             setDescripcion('');
             setPrecio('');
+            setIdProveedor('');
         }
     }, [productoAEditar]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setMensaje(null);
-        setCargando(true);
 
+        if (!idProveedor) {
+            setMensaje({ tipo: 'error', texto: 'Debes seleccionar un proveedor para el producto.' });
+            return;
+        }
+
+        setCargando(true);
         const esEdicion = Boolean(productoAEditar);
-        const url = esEdicion ? `/api/productos/${productoAEditar!.IDProducto}` : '/api/productos';
-        const method = esEdicion ? 'PUT' : 'POST';
 
         try {
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nombre: nombre.trim(),
-                    descripcion: descripcion.trim(),
-                    precio: Number(precio),
-                }),
-            });
+            if (esEdicion) {
+                const resProd = await fetch(`/api/productos/${productoAEditar!.IDProducto}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre: nombre.trim(),
+                        descripcion: descripcion.trim(),
+                        IDProveedor: Number(idProveedor),
+                    }),
+                });
+                if (!resProd.ok) throw new Error('No se pudo actualizar el producto.');
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Error al procesar la solicitud.');
-            }
+                if (Number(precio) !== Number(productoAEditar!.precio)) {
+                    await fetch(`/api/productos/${productoAEditar!.IDProducto}/precios`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ valor: Number(precio) }),
+                    });
+                }
 
-            setMensaje({
-                tipo: 'exito',
-                texto: esEdicion
-                    ? '¡Producto actualizado correctamente!'
-                    : '¡Producto creado correctamente en el catálogo!',
-            });
+                setMensaje({ tipo: 'exito', texto: '¡Producto y precio actualizados con éxito!' });
+            } else {
+                const resProd = await fetch('/api/productos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre: nombre.trim(),
+                        descripcion: descripcion.trim(),
+                        IDProveedor: Number(idProveedor),
+                    }),
+                });
+                if (!resProd.ok) throw new Error('Error al crear el producto.');
+                const dataProd = await resProd.json();
 
-            if (!esEdicion) {
+                await fetch(`/api/productos/${dataProd.id}/precios`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ valor: Number(precio) }),
+                });
+
+                setMensaje({ tipo: 'exito', texto: '¡Producto y precio inicial creados con éxito!' });
                 setNombre('');
                 setDescripcion('');
                 setPrecio('');
+                setIdProveedor('');
             }
 
             onGuardarExito();
         } catch (error: any) {
-            setMensaje({
-                tipo: 'error',
-                texto: error.message || 'No se pudo conectar con el servidor.',
-            });
+            setMensaje({ tipo: 'error', texto: error.message || 'Error al procesar la solicitud.' });
         } finally {
             setCargando(false);
         }
     };
 
     return (
-        <div className="product-form-card">
-            <div className="form-header">
-                <h3 className="form-title">
-                    {productoAEditar ? `Editar Producto #${productoAEditar.IDProducto}` : 'Crear Nuevo Producto'}
+        <article className="product-form-card">
+            <header className="product-form-header">
+                <h3 className="product-form-title">
+                    {productoAEditar ? `Editar Producto #${productoAEditar.IDProducto}` : '`Reg`istrar Nuevo Producto'}
                 </h3>
-                {productoAEditar && (
-                    <button type="button" onClick={onCancelarEdicion} className="btn-cancelar-top">
-                        Cancelar edición
-                    </button>
-                )}
-            </div>
+                <p className="product-form-subtitle">
+                    {productoAEditar
+                        ? 'Modifica los datos del producto o actualiza su precio de cotización'
+                        : 'Ingresa los datos del insumo o producto y su proveedor'}
+                </p>
+            </header>
 
             {mensaje && (
-                <div className={`alert-box alert-${mensaje.tipo}`}>
+                <div className={`form-feedback-alert feedback-${mensaje.tipo}`}>
                     {mensaje.texto}
+                    <button className="close-alert-btn" type="button" onClick={() => setMensaje(null)} aria-label='Cerrar notificacion'>
+                        X
+                    </button>
                 </div>
             )}
 
-            <form className="admin-form" onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label htmlFor="prod-nombre" className="form-label">Nombre del Producto *</label>
+            <form onSubmit={handleSubmit} className="product-form-grid">
+                <div className="form-group-item full-width">
+                    <label htmlFor="prod-nombre" className="field-label">Nombre del Producto *</label>
                     <input
                         id="prod-nombre"
                         type="text"
-                        required
-                        maxLength={150}
+                        className="field-control"
                         placeholder="Ej: Resma Papel A4 75g Chambril"
-                        className="form-input"
                         value={nombre}
                         onChange={(e) => setNombre(e.target.value)}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label htmlFor="prod-descripcion" className="form-label">Descripción *</label>
-                    <textarea
-                        id="prod-descripcion"
                         required
-                        rows={3}
-                        placeholder="Especificaciones o detalles del producto..."
-                        className="form-input form-textarea"
-                        value={descripcion}
-                        onChange={(e) => setDescripcion(e.target.value)}
                     />
                 </div>
 
-                <div className="form-group">
-                    <label htmlFor="prod-precio" className="form-label">Precio Unitario ($) *</label>
+                <div className="form-group-item">
+                    <label htmlFor="prod-proveedor" className="field-label">Proveedor *</label>
+                    <select
+                        id="prod-proveedor"
+                        className="field-control"
+                        value={idProveedor}
+                        onChange={(e) => setIdProveedor(e.target.value ? Number(e.target.value) : '')}
+                        required
+                    >
+                        <option value="">-- Seleccionar Proveedor --</option>
+                        {proveedores.map((prov) => (
+                            <option key={prov.IDProveedor} value={prov.IDProveedor}>
+                                {prov.razonSocial}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="form-group-item">
+                    <label htmlFor="prod-precio" className="field-label">Precio Vigente ($) *</label>
                     <input
                         id="prod-precio"
                         type="number"
                         step="0.01"
                         min="0"
-                        required
-                        placeholder="0.00"
-                        className="form-input"
+                        className="field-control"
+                        placeholder="Ej: 12500.00"
                         value={precio}
                         onChange={(e) => setPrecio(e.target.value)}
+                        required
                     />
                 </div>
 
-                <div className="form-actions">
-                    <button type="submit" className="btn-admin-submit" disabled={cargando}>
-                        {cargando
-                            ? 'Guardando...'
-                            : productoAEditar
-                                ? 'Guardar Cambios'
-                                : 'Crear Producto'}
-                    </button>
+                <div className="form-group-item full-width">
+                    <label htmlFor="prod-desc" className="field-label">Descripción</label>
+                    <textarea
+                        id="prod-desc"
+                        rows={3}
+                        className="field-control field-textarea"
+                        placeholder="Especificaciones técnicas, gramaje, terminación..."
+                        value={descripcion}
+                        onChange={(e) => setDescripcion(e.target.value)}
+                    />
+                </div>
 
+                <div className="form-actions-bar full-width">
                     {productoAEditar && (
                         <button
                             type="button"
-                            className="btn-admin-cancel"
+                            className="btn-cancel-action"
                             onClick={onCancelarEdicion}
                             disabled={cargando}
                         >
                             Cancelar
                         </button>
                     )}
+                    <button type="submit" className="btn-save-submit" disabled={cargando}>
+                        {cargando ? 'Guardando...' : productoAEditar ? 'Guardar Cambios' : 'Crear Producto'}
+                    </button>
                 </div>
             </form>
-        </div>
+        </article>
     );
 }
