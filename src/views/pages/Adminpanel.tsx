@@ -17,6 +17,47 @@ export function Adminpanel() {
     const [proveedorAEditar, setProveedorAEditar] = useState<Proveedor | null>(null);
     const [busquedaProveedor, setBusquedaProveedor] = useState('');
 
+    const [productoHistorial, setProductoHistorial] = useState<{ id: number; nombre: string } | null>(null);
+    const [historialPrecios, setHistorialPrecios] = useState<Array<{ fechaDesde: string; valor: number | string }>>([]);
+    const [cargandoHistorial, setCargandoHistorial] = useState(false);
+    const [errorHistorial, setErrorHistorial] = useState<string | null>(null);
+
+    const handleAbrirHistorial = async (id: number, nombre: string) => {
+        setProductoHistorial({ id, nombre });
+        setCargandoHistorial(true);
+        setErrorHistorial(null);
+        try {
+            const respuesta = await fetch(`/api/productos/${id}/precios`);
+            if (!respuesta.ok) {
+                throw new Error('No se pudo obtener el historial de precios.');
+            }
+            const data = await respuesta.json();
+            setHistorialPrecios(data);
+        } catch (err: any) {
+            setErrorHistorial(err.message || 'Error al cargar el historial.');
+        } finally {
+            setCargandoHistorial(false);
+        }
+    };
+    const handleCerrarHistorial = () => {
+        setProductoHistorial(null);
+        setHistorialPrecios([]);
+        setErrorHistorial(null);
+    };
+
+    useEffect(() => {
+        if (productoHistorial) {
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
+        }
+
+        // Limpieza por si el usuario cambia de página de golpe
+        return () => {
+            document.body.classList.remove('modal-open');
+        };
+    }, [productoHistorial]);
+
     const cargarProductos = async () => {
         setCargandoProductos(true);
         try {
@@ -191,13 +232,10 @@ export function Adminpanel() {
                                             <div className="product-item-actions">
                                                 <button
                                                     type="button"
-                                                    className="btn-card-action btn-card-edit"
-                                                    onClick={() => {
-                                                        setProductoAEditar(prod);
-                                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                    }}
+                                                    className="btn-card-action btn-card-history"
+                                                    onClick={() => handleAbrirHistorial(prod.IDProducto, prod.nombre)}
                                                 >
-                                                    Editar
+                                                    Hist. de Precios
                                                 </button>
                                                 <button
                                                     type="button"
@@ -205,6 +243,17 @@ export function Adminpanel() {
                                                     onClick={() => handleEliminarProducto(prod.IDProducto, prod.nombre)}
                                                 >
                                                     Eliminar
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="btn-card-action btn-card-edit btn-card-full"
+                                                    onClick={() => {
+                                                        setProductoAEditar(prod);
+                                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                    }}
+                                                >
+                                                    Editar Producto
                                                 </button>
                                             </div>
                                         </div>
@@ -304,6 +353,75 @@ export function Adminpanel() {
                         )}
                     </section>
                 </>
+            )}
+
+            {productoHistorial && (
+                <div className="modal-overlay" onClick={handleCerrarHistorial}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <h3 className="modal-title">Historial de Precios</h3>
+                                <p className="modal-subtitle">{productoHistorial.nombre}</p>
+                            </div>
+                            <button
+                                type="button"
+                                className="modal-close-icon"
+                                onClick={handleCerrarHistorial}
+                                aria-label="Cerrar modal"
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <div className="modal-body">
+                            {cargandoHistorial ? (
+                                <p className="empty-state">Cargando precios...</p>
+                            ) : errorHistorial ? (
+                                <p className="empty-state">{errorHistorial}</p>
+                            ) : historialPrecios.length === 0 ? (
+                                <p className="empty-state">No hay registros de precios para este producto.</p>
+                            ) : (
+                                historialPrecios.map((item, index) => {
+                                    const esVigente = index === 0;
+                                    const fecha = new Date(item.fechaDesde).toLocaleString('es-AR', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    });
+
+                                    return (
+                                        <div
+                                            key={item.fechaDesde}
+                                            className={`history-item ${esVigente ? 'history-item-current' : ''}`}
+                                        >
+                                            <div className="history-item-left">
+                                                <span className="history-date">{fecha}</span>
+                                            </div>
+                                            <div className="history-price">
+                                                ${Number(item.valor).toLocaleString('es-AR', {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        <div className="modal-footer">
+                            <button
+                                type="button"
+                                className="btn-modal-close"
+                                onClick={handleCerrarHistorial}
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </main>
     );
