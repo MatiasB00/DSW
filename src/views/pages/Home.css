@@ -1,4 +1,3 @@
-
 .home-container {
   min-block-size: calc(100dvh - 72px);
   background-image: url('../assets/images/wpp.webp');
@@ -72,7 +71,6 @@
   font-size: 0.95rem;
 }
 
-/* Tablet */
 @media (min-width: 640px) {
   .home-container {
     padding-inline: 1.5rem;
@@ -84,7 +82,6 @@
   }
 }
 
-/* Desktop */
 @media (min-width: 768px) {
   .home-container {
     padding-inline: 2rem;

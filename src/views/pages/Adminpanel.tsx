@@ -117,7 +117,6 @@ export function Adminpanel() {
                     Gestión integral de catálogo, precios y proveedores mayoristas
                 </p>
 
-                {/* Navegación por Pestañas */}
                 <div className="admin-tabs-bar">
                     <button
                         type="button"
@@ -136,10 +135,8 @@ export function Adminpanel() {
                 </div>
             </header>
 
-            {/* VISTA 1: GESTIÓN DE PRODUCTOS */}
             {pestanaActiva === 'productos' && (
                 <>
-                    {/* Formulario autónomo */}
                     <ProductForm
                         productoAEditar={productoAEditar}
                         onGuardarExito={() => {
@@ -149,7 +146,6 @@ export function Adminpanel() {
                         onCancelarEdicion={() => setProductoAEditar(null)}
                     />
 
-                    {/* Catálogo de Productos */}
                     <section className="admin-section">
                         <div className="section-header-row">
                             <h3 className="section-title">
@@ -172,7 +168,6 @@ export function Adminpanel() {
                                                 <h4 className="product-item-name">{prod.nombre}</h4>
                                             </div>
 
-                                            {/* Proveedor asociado */}
                                             <div className="product-item-prov">
                                                 {prod.proveedorNombre || 'Proveedor no especificado'}
                                             </div>
@@ -221,10 +216,8 @@ export function Adminpanel() {
                 </>
             )}
 
-            {/* VISTA 2: GESTIÓN DE PROVEEDORES */}
             {pestanaActiva === 'proveedores' && (
                 <>
-                    {/* Formulario autónomo */}
                     <ProveedoresForm
                         proveedorAEditar={proveedorAEditar}
                         onGuardarExito={() => {
@@ -234,14 +227,12 @@ export function Adminpanel() {
                         onCancelarEdicion={() => setProveedorAEditar(null)}
                     />
 
-                    {/* Catálogo de Proveedores */}
                     <section className="admin-section">
                         <div className="section-header-row">
                             <h3 className="section-title">
                                 Proveedores Registrados ({proveedoresFiltrados.length})
                             </h3>
 
-                            {/* Barra de Búsqueda */}
                             <div className="search-box-container">
                                 <input
                                     type="text"

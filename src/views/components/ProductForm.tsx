@@ -119,7 +119,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
         <article className="product-form-card">
             <header className="product-form-header">
                 <h3 className="product-form-title">
-                    {productoAEditar ? `Editar Producto #${productoAEditar.IDProducto}` : 'Registrar Nuevo Producto'}
+                    {productoAEditar ? `Editar Producto #${productoAEditar.IDProducto}` : '`Reg`istrar Nuevo Producto'}
                 </h3>
                 <p className="product-form-subtitle">
                     {productoAEditar
