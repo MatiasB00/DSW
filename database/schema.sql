@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS Usuario (
   nombre VARCHAR(100) NOT NULL,
   apellido VARCHAR(100) NOT NULL,
   email VARCHAR(254) NOT NULL,
-  rol VARCHAR(30) NOT NULL,
+  contrasenia VARCHAR(255) NOT NULL,
+  rol VARCHAR(30) NOT NULL DEFAULT 'cliente',
   PRIMARY KEY (IDUsuario),
   UNIQUE KEY uq_usuario_email (email)
 ) ENGINE=InnoDB;

@@ -3,6 +3,7 @@ import Joi from 'joi';
 import * as catalogController from './controllers/catalogController';
 import * as orderController from './controllers/orderController';
 import * as priceController from './controllers/priceController';
+import * as authController from './controllers/authController';
 
 
 const idParams = Joi.object({
@@ -20,6 +21,20 @@ const usuarioSchema = Joi.object({
   email: Joi.string().trim().email().max(254).required(),
   rol: Joi.string().trim().min(1).max(30).required(),
 });
+
+const registroSchema = Joi.object({
+  nombre: Joi.string().trim().min(1).max(100).required(),
+  apellido: Joi.string().trim().min(1).max(100).required(),
+  email: Joi.string().trim().email().max(254).required(),
+  contrasenia: Joi.string().trim().min(6).max(128).required(),
+  rol: Joi.string().valid('admin', 'cliente').optional(),
+})
+
+const loginSchema = Joi.object({
+  email: Joi.string().trim().email().max(254).required(),
+  contrasenia: Joi.string().required(),
+})
+
 
 const proveedorSchema = Joi.object({
   cuit: Joi.string().trim().min(1).max(20).required(),
@@ -128,10 +143,28 @@ function catalogRoutes(
 }
 
 export const routes: ServerRoute[] = [
+  {
+    method: 'POST',
+    path: '/api/auth/register',
+    options: { validate: { payload: registroSchema } },
+    handler: authController.register,
+  },
+  {
+    method: 'POST',
+    path: '/api/auth/login',
+    options: { validate: { payload: loginSchema } },
+    handler: authController.login,
+  },
+
   ...catalogRoutes('usuarios', 'usuarios', usuarioSchema),
   ...catalogRoutes('proveedores', 'proveedores', proveedorSchema),
   ...catalogRoutes('productos', 'productos', productoSchema),
-  { method: 'GET', path: '/api/pedidos', handler: orderController.list },
+
+  {
+    method: 'GET',
+    path: '/api/pedidos',
+    handler: orderController.list
+  },
   {
     method: 'GET',
     path: '/api/productos/{id}/precios',
