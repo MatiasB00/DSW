@@ -26,16 +26,16 @@ Regularidad:
 |Req|Detalle|
 |:-|:-|
 |CRUD simple|1. CRUD Usuario<br>2. CRUD Proveedores<br>3. CRUD Productos|
-|CRUD dependiente|1. CRUD Pedido {depende de} CRUD Tipo Producto<br>2. CRUD Precio {depende de} CRUD Producto|
-|Listado<br>+<br>detalle| 1. Listado de productos filtrado por tipo de producto, muestra precion, nombre y descripcion => detalle CRUD Habitacion<br> 2. Listado de pedidos, muestra nro de pedido, tipo de pedido, composicion y fecha de entrega => detalle muestra datos completos del pedido|
-|CUU/Epic|1. Registro de un usuario<br>2. Agregar productos al carrito?|
+|CRUD dependiente|1. CRUD Pedido {depende de} CRUD Usuario<br>2. CRUD Precio {depende de} CRUD Producto|
+|Listado<br>+<br>detalle| 1. Listado de productos filtrado por nombre, muestra precio, nombre y descripcion => detalle CRUD Habitacion<br> 2. Listado de proveedores, buscables por razon social o CUIT => se muestra el proveedor con sus datos y respectivos botones.|
+|CUU/Epic|1. Registro de un usuario<br>2. Agregar productos al carrito|
 
 
 Adicionales para Aprobación
 |Req|Detalle|
 |:-|:-|
 |CRUD |1. CRUD Usuario<br>2. CRUD Proveedores<br>3. CRUD Productos<br>4. CRUD Precio<br>5. CRUD Pedido<br>6. CRUD Contacto<br>|
-|CUU/Epic|1. Registro de un usuario<br>2. Agregar productos al carrito?<br>3. Realizar el check-out y facturación de pedido completo?|
+|CUU/Epic|1. Registro de un usuario<br>2. Agregar productos al carrito?<br>3. Realizar el check-out y facturación de pedido completo|
 
 
 ### Alcance Adicional Voluntario
