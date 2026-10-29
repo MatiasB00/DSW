@@ -51,6 +51,7 @@ export function Navbar() {
 
             <nav className="navbar-nav">
                 <Link to="/" className="nav-link">Inicio</Link>
+                <Link to="/productos" className="nav-link">Productos</Link>
                 <Link to="/nosotros" className="nav-link">Nosotros</Link>
 
                 {!usuario && (

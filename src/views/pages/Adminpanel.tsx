@@ -52,7 +52,7 @@ export function Adminpanel() {
             document.body.classList.remove('modal-open');
         }
 
-        // Limpieza por si el usuario cambia de página de golpe
+
         return () => {
             document.body.classList.remove('modal-open');
         };
@@ -213,7 +213,7 @@ export function Adminpanel() {
                                                 {prod.proveedorNombre || 'Proveedor no especificado'}
                                             </div>
 
-                                            <p className="product-item-desc">
+                                            <p className="product-item-desc" title={prod.descripcion}>
                                                 {prod.descripcion || 'Sin descripción.'}
                                             </p>
                                         </div>

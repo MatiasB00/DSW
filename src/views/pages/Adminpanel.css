@@ -28,9 +28,9 @@
   margin-block-end: 1.25rem;
 }
 
-
 .admin-tabs-bar {
   display: flex;
+  justify-content: center;
   gap: 0.75rem;
   margin-block-start: 1rem;
   overflow-x: auto;
@@ -167,6 +167,12 @@
   color: #55453b;
   line-height: 1.5;
   margin-block-end: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .product-item-footer {
@@ -473,6 +479,8 @@ body.modal-open {
     align-items: center;
   }
 
+
+
   .search-box-container {
     max-inline-size: 320px;
   }
@@ -487,4 +495,5 @@ body.modal-open {
   .admin-container {
     padding-inline: 2rem;
   }
+
 }

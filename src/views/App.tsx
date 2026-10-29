@@ -7,6 +7,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Adminpanel } from './pages/Adminpanel';
 import { Perfil } from './pages/Perfil';
+import { Productos } from './pages/Productos';
 
 export function App() {
   return (
@@ -19,6 +20,7 @@ export function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Adminpanel />} />
         <Route path="/perfil" element={<Perfil />} />
+        <Route path="/productos" element={<Productos />} />
       </Routes>
     </BrowserRouter>
   );
