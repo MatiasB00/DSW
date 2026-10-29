@@ -1,3 +1,8 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 html {
   box-sizing: border-box;
   -webkit-text-size-adjust: 100%;
@@ -14,6 +19,7 @@ html {
 body {
   background-color: #faf6f0;
   color: #2b211b;
+  min-height: 100vh;
   min-block-size: 100dvh;
   inline-size: 100%;
   overflow-x: hidden;
@@ -23,4 +29,4 @@ body {
 a {
   text-decoration: none;
   color: inherit;
-}
+}}

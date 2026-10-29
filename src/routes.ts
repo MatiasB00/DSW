@@ -4,7 +4,7 @@ import * as catalogController from './controllers/catalogController';
 import * as orderController from './controllers/orderController';
 import * as priceController from './controllers/priceController';
 import * as authController from './controllers/authController';
-
+import * as userController from './controllers/userController'
 
 const idParams = Joi.object({
   id: Joi.number().integer().positive().max(4294967295).required(),
