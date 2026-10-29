@@ -6,6 +6,7 @@ import { Nosotros } from './pages/Nosotros';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Adminpanel } from './pages/Adminpanel';
+import { Perfil } from './pages/Perfil';
 
 export function App() {
   return (
@@ -17,6 +18,7 @@ export function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Adminpanel />} />
+        <Route path="/perfil" element={<Perfil />} />
       </Routes>
     </BrowserRouter>
   );

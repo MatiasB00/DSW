@@ -63,12 +63,16 @@ async function insertItems(
   let totalCents = 0;
   for (const item of items) {
     const products = await rows<RowDataPacket>(
-      'SELECT precio FROM Producto WHERE IDProducto = ? FOR UPDATE',
-      [item.IDProducto],
-      connection,
+      `SELECT prec.valor AS precio 
+       FROM Precio prec 
+       WHERE prec.IDProducto = ? 
+       ORDER BY prec.fechaDesde DESC 
+       LIMIT 1 
+       FOR UPDATE`,
+      [item.IDProducto], connection,
     );
     if (!products[0]) {
-      throw Boom.notFound(`No existe el producto ${item.IDProducto}.`);
+      throw Boom.notFound(`No existe precio configurado para el producto ${item.IDProducto}.`);
     }
     const subtotalCents = ensureMoney(
       toCents(products[0].precio as string) * item.cantidad,
@@ -128,7 +132,7 @@ export async function find(id: number): Promise<RowDataPacket | undefined> {
   if (order.tipo === 'insumo') {
     order.items = await databaseOperation(() =>
       rows(
-        `SELECT pp.IDProducto, pr.nombre, pp.cantidad, pr.precio, pp.subtotal
+        `SELECT pp.IDProducto, pr.nombre, pp.cantidad, ROUND(pp.subtotal / pp.cantidad, 2) AS precio, pp.subtotal
          FROM ProdPed pp JOIN Producto pr ON pr.IDProducto = pp.IDProducto
          WHERE pp.IDPedido = ? ORDER BY pp.IDProducto`,
         [id],
@@ -267,8 +271,8 @@ export async function updateItem(
       );
       if (!order[0]) throw Boom.notFound('No existe un pedido de insumos con ese ID.');
       const lines = await rows<RowDataPacket>(
-        `SELECT pp.subtotal, pr.precio FROM ProdPed pp
-         JOIN Producto pr ON pr.IDProducto = pp.IDProducto
+        `SELECT pp.subtotal, ROUND(pp.subtotal / pp.cantidad, 2) AS precio 
+         FROM ProdPed pp
          WHERE pp.IDPedido = ? AND pp.IDProducto = ? FOR UPDATE`,
         [orderId, productId],
         connection,
