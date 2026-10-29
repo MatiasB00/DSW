@@ -1,6 +1,7 @@
 import bycript from 'bcryptjs';
 import { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { databaseOperation, result, rows } from '../db';
+import * as userModel from './userModel'
 
 export interface UsuarioRow extends RowDataPacket {
     IDUsuario: number;
@@ -32,19 +33,23 @@ export async function buscarPorEmail(email: string): Promise<UsuarioRow | null> 
 
 export async function registrarUsuario(datos: UsuarioRegistroInput) {
     return databaseOperation(async () => {
-        const hashContrasenia = await bycript.hash(datos.contrasenia, 10);
-        const rol = datos.rol ?? 'cliente';
-        const insertarResultado = (await result(
-            'INSERT INTO Usuario (nombre, apellido, email, contrasenia, rol) VALUES (?, ?, ?, ? ,?)',
-            [datos.nombre, datos.apellido, datos.email, hashContrasenia, rol]
-        )) as ResultSetHeader;
+        const contraseniaHash = await bycript.hash(datos.contrasenia, 10);
 
-        return {
-            IDUsuario: insertarResultado.insertId,
+        const IDUsuario = await userModel.create({
             nombre: datos.nombre,
             apellido: datos.apellido,
             email: datos.email,
-            rol: rol
+            contraseniaHash,
+            rol: datos.rol
+            
+        })
+
+        return {
+            IDUsuario,
+            nombre: datos.nombre,
+            apellido: datos.apellido,
+            email: datos.email,
+            rol: datos.rol ?? 'cliente'
         };
     })
 }
