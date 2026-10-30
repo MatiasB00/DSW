@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useCarrito } from '../context/carritoContext';
 import './Navbar.css';
 
 interface UsuarioSesion {
@@ -19,6 +20,7 @@ export function Navbar() {
         const stored = localStorage.getItem('user');
         return stored ? JSON.parse(stored) : null;
     });
+    const { totalItems } = useCarrito();
 
     useEffect(() => {
         const sincronizarAuth = () => {
@@ -49,7 +51,6 @@ export function Navbar() {
     return (
         <header className="navbar">
             <div className="navbar-container">
-                {/* Logo / Marca */}
                 <div className="navbar-brand">
                     <Link to="/" className="navbar-logo" onClick={cerrarMenu}>
                         Imprenta Mayorista
@@ -68,7 +69,6 @@ export function Navbar() {
                     <span className="hamburger-line"></span>
                 </button>
 
-                {/* Menú de Enlaces */}
                 <nav className={`navbar-nav ${menuAbierto ? 'nav-open' : ''}`}>
                     <Link to="/" className="nav-link" onClick={cerrarMenu}>
                         Inicio
@@ -79,6 +79,10 @@ export function Navbar() {
                     <Link to="/nosotros" className="nav-link" onClick={cerrarMenu}>
                         Nosotros
                     </Link>
+                    <Link to="/carrito" className="nav-link nav-link-cart" onClick={cerrarMenu}>
+                        Carrito {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
+                    </Link>
+
 
                     {!usuario && (
                         <Link to="/login" className="btn-login" onClick={cerrarMenu}>

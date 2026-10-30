@@ -228,10 +228,15 @@
     transition: background-color 0.2s ease;
 }
 
+
+
 .btn-add-order:hover {
     background-color: #991b1b;
 }
 
+.btn-add-order.btn-added {
+    background-color: #166534;
+}
 
 .catalog-status-box {
     background-color: #fffdfa;

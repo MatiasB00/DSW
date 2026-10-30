@@ -426,19 +426,6 @@ body.modal-open {
   color: #736257;
 }
 
-.history-badge {
-  display: inline-block;
-  align-self: flex-start;
-  color: #000000;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding-inline: 0.4rem;
-  padding-block: 0.15rem;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 .history-price {
   font-size: 1.15rem;
   font-weight: 800;

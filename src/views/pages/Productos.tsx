@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useCarrito } from '../context/carritoContext';
 import './Productos.css';
 
 export interface ProductoItem {
@@ -12,6 +13,13 @@ export function Productos() {
     const [productos, setProductos] = useState<ProductoItem[]>([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { agregarProducto } = useCarrito();
+    const [agregadoId, setAgregadoId] = useState<number | null>(null);
+    const handleAgregar = (prod: ProductoItem) => {
+        agregarProducto(prod);
+        setAgregadoId(prod.IDProducto);
+        setTimeout(() => setAgregadoId(null), 1500);
+    };
 
     const [busqueda, setBusqueda] = useState('');
     const [ordenPrecio, setOrdenPrecio] = useState<'defecto' | 'asc' | 'desc'>('defecto');
@@ -158,12 +166,8 @@ export function Productos() {
                                     </span>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    className="btn-add-order"
-                                    onClick={() => alert(`Próximamente: agregar ${prod.nombre} al pedido`)}
-                                >
-                                    Agregar al Pedido
+                                <button type="button" className={`btn-add-order ${agregadoId === prod.IDProducto ? 'btn-added' : ''}`} onClick={() => handleAgregar(prod)}>
+                                    {agregadoId === prod.IDProducto ? '¡Agregado!' : 'Agregar al Pedido'}
                                 </button>
                             </div>
                         </article>

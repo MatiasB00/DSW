@@ -36,6 +36,22 @@
   color: #b91c1c;
 }
 
+.nav-link-cart {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cart-badge {
+  background-color: #b91c1c;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding-inline: 0.45rem;
+  padding-block: 0.15rem;
+  border-radius: 9999px;
+  line-height: 1;
+}
 
 .hamburger-btn {
   display: flex;
@@ -59,7 +75,8 @@
   transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
-/* Transformación de 3 líneas a cruz '✕' */
+
+
 .hamburger-btn.is-active .hamburger-line:nth-child(1) {
   transform: translateY(8.5px) rotate(45deg);
 }
