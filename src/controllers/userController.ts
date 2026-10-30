@@ -10,7 +10,7 @@ export function list() {
 export function get() {
   return async (request: Request, h: ResponseToolkit) => {
     const record = await user.findOne(Number(request.params.id));
-    if (!record) throw Boom.notFound('No se encontró el registro solicitado.');
+    if (!record) throw Boom.notFound('No se encontró el usuario solicitado.');
     return h.response(record).code(200);
   };
 }
@@ -28,15 +28,15 @@ export function update() {
       Number(request.params.id),
       request.payload as user.userInput,
     );
-    if (!updated) throw Boom.notFound('No se encontró el registro solicitado.');
-    return h.response({ message: 'Registro actualizado.' }).code(200);
+    if (!updated) throw Boom.notFound('No se encontró el usuario solicitado.');
+    return h.response({ message: 'Usuario actualizado.' }).code(200);
   };
 }
 
 export function remove() {
   return async (request: Request, h: ResponseToolkit) => {
     const removed = await user.remove(Number(request.params.id));
-    if (!removed) throw Boom.notFound('No se encontró el registro solicitado.');
+    if (!removed) throw Boom.notFound('No se encontró el usuario solicitado.');
     return h.response().code(204);
   };
 }

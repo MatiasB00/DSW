@@ -4,7 +4,8 @@ import * as catalogController from './controllers/catalogController';
 import * as orderController from './controllers/orderController';
 import * as priceController from './controllers/priceController';
 import * as authController from './controllers/authController';
-import * as userController from './controllers/userController'
+import * as userController from './controllers/userController';
+import * as productController from './controllers/productController';
 
 const idParams = Joi.object({
   id: Joi.number().integer().positive().max(4294967295).required(),
@@ -19,6 +20,7 @@ const usuarioSchema = Joi.object({
   nombre: Joi.string().trim().min(1).max(100).required(),
   apellido: Joi.string().trim().min(1).max(100).required(),
   email: Joi.string().trim().email().max(254).required(),
+  contraseniaHash: Joi.string().trim().min(6).max(20).required(),
   rol: Joi.string().trim().min(1).max(30).required(),
 });
 
@@ -47,7 +49,7 @@ const proveedorSchema = Joi.object({
 const productoSchema = Joi.object({
   nombre: Joi.string().trim().min(1).max(150).required(),
   descripcion: Joi.string().allow('').required(),
-  IDProveedor: Joi.number().integer().positive().required(),
+  IDProveedor: Joi.number().integer().positive().allow(null).optional(),
 });
 
 const precioSchema = Joi.object({
@@ -156,9 +158,75 @@ export const routes: ServerRoute[] = [
     handler: authController.login,
   },
 
-  ...catalogRoutes('usuarios', 'usuarios', usuarioSchema),
   ...catalogRoutes('proveedores', 'proveedores', proveedorSchema),
-  ...catalogRoutes('productos', 'productos', productoSchema),
+
+  {
+    method: 'GET',
+    path: '/api/usuarios',
+    handler: userController.list()
+  },
+
+  {
+    method: 'GET',
+    path: '/api/usuarios/{id}',
+    options: { validate : { params: idParams } },
+    handler: userController.get()
+  },
+
+  {
+    method: 'POST',
+    path: '/api/usuarios',
+    options: { validate: { payload: usuarioSchema} },
+    handler: userController.create()
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/usuarios/{id}',
+    options: { validate: {params: idParams, payload: usuarioSchema} },
+    handler: userController.update()
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/usuarios/{id}',
+    options: { validate: { params: idParams } },
+    handler: userController.remove()
+  },
+
+  {
+    method: 'GET',
+    path: '/api/productos',
+    handler: productController.list()
+  },
+
+  {
+    method: 'GET',
+    path: '/api/productos/{id}',
+    options: { validate : { params: idParams } },
+    handler: productController.get()
+  },
+
+  {
+    method: 'POST',
+    path: '/api/productos',
+    options: { validate: { payload: productoSchema} },
+    handler: productController.create()
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/productos/{id}',
+    options: { validate: {params: idParams, payload: productoSchema} },
+    handler: productController.update()
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/productos/{id}',
+    options: { validate: { params: idParams } },
+    handler: productController.remove()
+  },
 
   {
     method: 'GET',

@@ -51,7 +51,7 @@ export async function update(id: number, user: userInput): Promise<boolean> {
 
   return databaseOperation(async ()=> {
     const updated = await result(
-      'UPDATE usuario SET nombre = ?, apellido = ?, email = ?, contrasenia = ?, rol = ? WHERE IDUsuario = ?',
+      'UPDATE Usuario SET nombre = ?, apellido = ?, email = ?, contrasenia = ?, rol = ? WHERE IDUsuario = ?',
       [...values, id]
     ) as ResultSetHeader;
     
