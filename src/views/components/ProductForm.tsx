@@ -188,7 +188,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                     <label htmlFor="prod-desc" className="field-label">Descripción</label>
                     <textarea
                         id="prod-desc"
-                        rows={3}
+                        rows={5}
                         className="field-control field-textarea"
                         placeholder="Especificaciones técnicas, gramaje, terminación..."
                         value={descripcion}

@@ -7,6 +7,56 @@ export function Adminpanel() {
     const [cargandoLista, setCargandoLista] = useState(true);
     const [productoAEditar, setProductoAEditar] = useState<Producto | null>(null);
 
+<<<<<<< HEAD
+=======
+
+    const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+    const [cargandoProveedores, setCargandoProveedores] = useState(true);
+    const [proveedorAEditar, setProveedorAEditar] = useState<Proveedor | null>(null);
+    const [busquedaProveedor, setBusquedaProveedor] = useState('');
+
+    const [productoHistorial, setProductoHistorial] = useState<{ id: number; nombre: string } | null>(null);
+    const [historialPrecios, setHistorialPrecios] = useState<Array<{ fechaDesde: string; valor: number | string }>>([]);
+    const [cargandoHistorial, setCargandoHistorial] = useState(false);
+    const [errorHistorial, setErrorHistorial] = useState<string | null>(null);
+
+    const handleAbrirHistorial = async (id: number, nombre: string) => {
+        setProductoHistorial({ id, nombre });
+        setCargandoHistorial(true);
+        setErrorHistorial(null);
+        try {
+            const respuesta = await fetch(`/api/productos/${id}/precios`);
+            if (!respuesta.ok) {
+                throw new Error('No se pudo obtener el historial de precios.');
+            }
+            const data = await respuesta.json();
+            setHistorialPrecios(data);
+        } catch (err: any) {
+            setErrorHistorial(err.message || 'Error al cargar el historial.');
+        } finally {
+            setCargandoHistorial(false);
+        }
+    };
+    const handleCerrarHistorial = () => {
+        setProductoHistorial(null);
+        setHistorialPrecios([]);
+        setErrorHistorial(null);
+    };
+
+    useEffect(() => {
+        if (productoHistorial) {
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
+        }
+
+
+        return () => {
+            document.body.classList.remove('modal-open');
+        };
+    }, [productoHistorial]);
+
+>>>>>>> origin/main
     const cargarProductos = async () => {
         setCargandoLista(true);
         try {
@@ -106,6 +156,7 @@ export function Adminpanel() {
                                         </span>
                                     </div>
 
+<<<<<<< HEAD
                                     {/* Botones de Acción */}
                                     <div className="product-item-actions">
                                         <button
@@ -115,6 +166,190 @@ export function Adminpanel() {
                                                 setProductoAEditar(prod);
                                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                             }}
+=======
+                                            <p className="product-item-desc" title={prod.descripcion}>
+                                                {prod.descripcion || 'Sin descripción.'}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <div className="product-item-footer">
+                                                <span className="product-item-price-label">Precio Vigente</span>
+                                                <span className="product-item-price">
+                                                    ${Number(prod.precio).toLocaleString('es-AR', {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    })}
+                                                </span>
+                                            </div>
+
+                                            <div className="product-item-actions">
+                                                <button
+                                                    type="button"
+                                                    className="btn-card-action btn-card-history"
+                                                    onClick={() => handleAbrirHistorial(prod.IDProducto, prod.nombre)}
+                                                >
+                                                    Hist. de Precios
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn-card-action btn-card-delete"
+                                                    onClick={() => handleEliminarProducto(prod.IDProducto, prod.nombre)}
+                                                >
+                                                    Eliminar
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="btn-card-action btn-card-edit btn-card-full"
+                                                    onClick={() => {
+                                                        setProductoAEditar(prod);
+                                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                    }}
+                                                >
+                                                    Editar Producto
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </>
+            )}
+
+            {pestanaActiva === 'proveedores' && (
+                <>
+                    <ProveedoresForm
+                        proveedorAEditar={proveedorAEditar}
+                        onGuardarExito={() => {
+                            cargarProveedores();
+                            setProveedorAEditar(null);
+                        }}
+                        onCancelarEdicion={() => setProveedorAEditar(null)}
+                    />
+
+                    <section className="admin-section">
+                        <div className="section-header-row">
+                            <h3 className="section-title">
+                                Proveedores Registrados ({proveedoresFiltrados.length})
+                            </h3>
+
+                            <div className="search-box-container">
+                                <input
+                                    type="text"
+                                    className="search-box-input"
+                                    placeholder="Buscar por razón social o CUIT..."
+                                    value={busquedaProveedor}
+                                    onChange={(e) => setBusquedaProveedor(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {cargandoProveedores ? (
+                            <p className="empty-state">Cargando proveedores de la base de datos...</p>
+                        ) : proveedores.length === 0 ? (
+                            <p className="empty-state">
+                                No hay proveedores registrados todavía.
+                            </p>
+                        ) : proveedoresFiltrados.length === 0 ? (
+                            <p className="empty-state">
+                                No se encontraron proveedores que coincidan con la búsqueda.
+                            </p>
+                        ) : (
+                            <div className="suppliers-grid">
+                                {proveedoresFiltrados.map((prov) => (
+                                    <article key={prov.IDProveedor} className="supplier-item-card">
+                                        <div>
+                                            <div className="supplier-item-header">
+                                                <h4 className="supplier-item-name">{prov.razonSocial}</h4>
+                                            </div>
+
+                                            <ul className="supplier-info-list">
+                                                <li>
+                                                    <strong>Cuit:</strong> {prov.cuit}
+                                                </li>
+                                                <li>
+                                                    <strong>Email:</strong> {prov.email}
+                                                </li>
+                                                <li>
+                                                    <strong>Teléfono:</strong> {prov.telefono || 'No especificado'}
+                                                </li>
+                                                <li>
+                                                    <strong>Dirección:</strong> {prov.direccion || 'No especificada'}
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div className="supplier-item-actions">
+                                            <button
+                                                type="button"
+                                                className="btn-card-action btn-card-edit"
+                                                onClick={() => {
+                                                    setProveedorAEditar(prov);
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                }}
+                                            >
+                                                Editar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-card-action btn-card-delete"
+                                                onClick={() => handleEliminarProveedor(prov.IDProveedor, prov.razonSocial)}
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </>
+            )}
+
+            {productoHistorial && (
+                <div className="modal-overlay" onClick={handleCerrarHistorial}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <h3 className="modal-title">Historial de Precios</h3>
+                                <p className="modal-subtitle">{productoHistorial.nombre}</p>
+                            </div>
+                            <button
+                                type="button"
+                                className="modal-close-icon"
+                                onClick={handleCerrarHistorial}
+                                aria-label="Cerrar modal"
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <div className="modal-body">
+                            {cargandoHistorial ? (
+                                <p className="empty-state">Cargando precios...</p>
+                            ) : errorHistorial ? (
+                                <p className="empty-state">{errorHistorial}</p>
+                            ) : historialPrecios.length === 0 ? (
+                                <p className="empty-state">No hay registros de precios para este producto.</p>
+                            ) : (
+                                historialPrecios.map((item, index) => {
+                                    const esVigente = index === 0;
+                                    const fecha = new Date(item.fechaDesde).toLocaleString('es-AR', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    });
+
+                                    return (
+                                        <div
+                                            key={item.fechaDesde}
+                                            className={`history-item ${esVigente ? 'history-item-current' : ''}`}
+>>>>>>> origin/main
                                         >
                                             ✏️ Editar
                                         </button>

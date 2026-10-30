@@ -28,9 +28,9 @@
   margin-block-end: 1.25rem;
 }
 
-
 .admin-tabs-bar {
   display: flex;
+  justify-content: center;
   gap: 0.75rem;
   margin-block-start: 1rem;
   overflow-x: auto;
@@ -167,6 +167,12 @@
   color: #55453b;
   line-height: 1.5;
   margin-block-end: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .product-item-footer {
@@ -420,19 +426,6 @@ body.modal-open {
   color: #736257;
 }
 
-.history-badge {
-  display: inline-block;
-  align-self: flex-start;
-  color: #000000;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding-inline: 0.4rem;
-  padding-block: 0.15rem;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 .history-price {
   font-size: 1.15rem;
   font-weight: 800;
@@ -473,6 +466,8 @@ body.modal-open {
     align-items: center;
   }
 
+
+
   .search-box-container {
     max-inline-size: 320px;
   }
@@ -487,4 +482,5 @@ body.modal-open {
   .admin-container {
     padding-inline: 2rem;
   }
+
 }

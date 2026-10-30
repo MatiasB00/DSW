@@ -66,7 +66,8 @@
 
 .field-textarea {
     resize: vertical;
-    min-block-size: 75px;
+    min-block-size: 130px;
+    line-height: 1.2;
 }
 
 .form-actions-bar {

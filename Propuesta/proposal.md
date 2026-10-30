@@ -27,7 +27,7 @@ Regularidad:
 |:-|:-|
 |CRUD simple|1. CRUD Usuario<br>2. CRUD Proveedores<br>3. CRUD Productos|
 |CRUD dependiente|1. CRUD Pedido {depende de} CRUD Usuario<br>2. CRUD Precio {depende de} CRUD Producto|
-|Listado<br>+<br>detalle| 1. Listado de productos filtrado por nombre, muestra precio, nombre y descripcion => detalle CRUD Habitacion<br> 2. Listado de proveedores, buscables por razon social o CUIT => se muestra el proveedor con sus datos y respectivos botones.|
+|Listado<br>+<br>detalle| 1. Listado de productos filtrado por nombre, muestra precio, nombre y descripcion => Detalle muestra info completa. <br> 2. Listado de proveedores, buscables por razon social o CUIT => se muestra el proveedor con sus datos y respectivos botones.|
 |CUU/Epic|1. Registro de un usuario<br>2. Agregar productos al carrito|
 
 
