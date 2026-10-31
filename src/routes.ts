@@ -1,11 +1,11 @@
 import { ServerRoute } from '@hapi/hapi';
 import Joi from 'joi';
-import * as catalogController from './controllers/catalogController';
 import * as orderController from './controllers/orderController';
 import * as priceController from './controllers/priceController';
 import * as authController from './controllers/authController';
 import * as userController from './controllers/userController';
 import * as productController from './controllers/productController';
+import * as providerController from './controllers/providerController'
 
 const idParams = Joi.object({
   id: Joi.number().integer().positive().max(4294967295).required(),
@@ -110,40 +110,6 @@ const updatePrintSchema = Joi.object({
   subtotal: Joi.number().precision(2).min(0).max(9999999999.99),
 }).min(1);
 
-function catalogRoutes(
-  path: string,
-  resource: 'usuarios' | 'productos' | 'proveedores',
-  schema: Joi.ObjectSchema,
-): ServerRoute[] {
-  return [
-    { method: 'GET', path: `/api/${path}`, handler: catalogController.list(resource) },
-    {
-      method: 'GET',
-      path: `/api/${path}/{id}`,
-      options: { validate: { params: idParams } },
-      handler: catalogController.get(resource),
-    },
-    {
-      method: 'POST',
-      path: `/api/${path}`,
-      options: { validate: { payload: schema } },
-      handler: catalogController.create(resource),
-    },
-    {
-      method: 'PUT',
-      path: `/api/${path}/{id}`,
-      options: { validate: { params: idParams, payload: schema } },
-      handler: catalogController.update(resource),
-    },
-    {
-      method: 'DELETE',
-      path: `/api/${path}/{id}`,
-      options: { validate: { params: idParams } },
-      handler: catalogController.remove(resource),
-    },
-  ];
-}
-
 export const routes: ServerRoute[] = [
   {
     method: 'POST',
@@ -158,9 +124,41 @@ export const routes: ServerRoute[] = [
     handler: authController.login,
   },
 
-  ...catalogRoutes('proveedores', 'proveedores', proveedorSchema),
+  {
+    method: 'GET',
+    path: '/api/proveedores',
+    handler: providerController.list()
+  },
 
   {
+    method: 'GET',
+    path: '/api/proveedores/{id}',
+    options: { validate : { params: idParams } },
+    handler: providerController.get()
+  },
+
+  {
+    method: 'POST',
+    path: '/api/proveedores',
+    options: { validate: { payload: proveedorSchema} },
+    handler: providerController.create()
+  },
+
+  {
+    method: 'PUT',
+    path: '/api/proveedores/{id}',
+    options: { validate: {params: idParams, payload: proveedorSchema} },
+    handler: providerController.update()
+  },
+
+  {
+    method: 'DELETE',
+    path: '/api/proveedores/{id}',
+    options: { validate: { params: idParams } },
+    handler: providerController.remove()
+  },
+
+{
     method: 'GET',
     path: '/api/usuarios',
     handler: userController.list()

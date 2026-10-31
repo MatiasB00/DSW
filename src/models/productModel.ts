@@ -11,7 +11,7 @@ export interface productInput {
 export async function findAll(): Promise <RowDataPacket[]> {
   return databaseOperation(()=>
     rows(`
-      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, pr.razonSocial AS ProveedorNombre,
+      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, pr.razonSocial AS proveedorNombre,
       COALESCE((
         SELECT prec.valor
         FROM Precio prec
@@ -30,7 +30,7 @@ export async function findAll(): Promise <RowDataPacket[]> {
 export async function findOne(id: number): Promise<RowDataPacket | undefined> {
   const found = await databaseOperation(()=>
     rows<RowDataPacket>(`
-      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, pr.razonSocial AS ProveedorNombre,
+      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, pr.razonSocial AS proveedorNombre,
       COALESCE((
         SELECT prec.valor
         FROM Precio prec
