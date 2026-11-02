@@ -51,11 +51,6 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
         e.preventDefault();
         setMensaje(null);
 
-        if (!idProveedor) {
-            setMensaje({ tipo: 'error', texto: 'Debes seleccionar un proveedor para el producto.' });
-            return;
-        }
-
         setCargando(true);
         const esEdicion = Boolean(productoAEditar);
 
@@ -67,7 +62,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                     body: JSON.stringify({
                         nombre: nombre.trim(),
                         descripcion: descripcion.trim(),
-                        IDProveedor: Number(idProveedor),
+                        IDProveedor: idProveedor ? Number(idProveedor) : null,
                     }),
                 });
                 if (!resProd.ok) throw new Error('No se pudo actualizar el producto.');
@@ -88,10 +83,11 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                     body: JSON.stringify({
                         nombre: nombre.trim(),
                         descripcion: descripcion.trim(),
-                        IDProveedor: Number(idProveedor),
+                        IDProveedor: idProveedor ? Number(idProveedor) : null,
                     }),
                 });
                 if (!resProd.ok) throw new Error('Error al crear el producto.');
+
                 const dataProd = await resProd.json();
 
                 await fetch(`/api/productos/${dataProd.id}/precios`, {
@@ -152,15 +148,14 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                 </div>
 
                 <div className="form-group-item">
-                    <label htmlFor="prod-proveedor" className="field-label">Proveedor *</label>
+                    <label htmlFor="prod-proveedor" className="field-label">Proveedor</label>
                     <select
                         id="prod-proveedor"
                         className="field-control"
                         value={idProveedor}
                         onChange={(e) => setIdProveedor(e.target.value ? Number(e.target.value) : '')}
-                        required
                     >
-                        <option value="">-- Seleccionar Proveedor --</option>
+                        <option value="">-- Sin Proveedor --</option>
                         {proveedores.map((prov) => (
                             <option key={prov.IDProveedor} value={prov.IDProveedor}>
                                 {prov.razonSocial}
