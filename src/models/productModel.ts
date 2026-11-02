@@ -6,12 +6,13 @@ export interface productInput {
   nombre: string,
   descripcion: string,
   IDProveedor?: number | null
+  IDCategoria?: number | null
 }
 
 export async function findAll(): Promise <RowDataPacket[]> {
   return databaseOperation(()=>
     rows(`
-      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, pr.razonSocial AS proveedorNombre,
+      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
       COALESCE((
         SELECT prec.valor
         FROM Precio prec
@@ -21,6 +22,7 @@ export async function findAll(): Promise <RowDataPacket[]> {
         ), 0) AS precio
       FROM Producto p 
       LEFT JOIN Proveedor pr ON p.IDProveedor = pr.IDProveedor
+      LEFT JOIN Categoria c ON p.IDCategoria = c.IDCategoria 
       ORDER BY p.IDProducto
       `
     )
@@ -30,7 +32,7 @@ export async function findAll(): Promise <RowDataPacket[]> {
 export async function findOne(id: number): Promise<RowDataPacket | undefined> {
   const found = await databaseOperation(()=>
     rows<RowDataPacket>(`
-      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, pr.razonSocial AS proveedorNombre,
+      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
       COALESCE((
         SELECT prec.valor
         FROM Precio prec
@@ -40,6 +42,7 @@ export async function findOne(id: number): Promise<RowDataPacket | undefined> {
         ), 0) AS precio
       FROM Producto p 
       LEFT JOIN Proveedor pr ON p.IDProveedor = pr.IDProveedor
+      LEFT JOIN Categoria c ON p.IDCategoria = c.IDCategoria
       WHERE p.IDProducto = ?
       `, [id]
     )
@@ -51,12 +54,13 @@ export async function create(product: productInput): Promise<number> {
   const values: SqlValue[] = [
     product.nombre,
     product.descripcion,
-    product.IDProveedor === undefined ? null : product.IDProveedor
+    product.IDProveedor === undefined ? null : product.IDProveedor,
+    product.IDCategoria === undefined ? null : product.IDCategoria
   ];
 
   return databaseOperation(async()=> {
     const inserted = (await result(
-      'INSERT INTO Producto (nombre, descripcion, IDProveedor) VALUES (?, ?, ?)', values
+      'INSERT INTO Producto (nombre, descripcion, IDProveedor, IDCategoria) VALUES (?, ?, ?, ?)', values
     )) as ResultSetHeader;
     return inserted.insertId;
   })
@@ -71,8 +75,13 @@ export async function update(id: number, product: productInput): Promise<boolean
     ] 
 
 if (product.IDProveedor !== undefined) { //si al producto le mandaron un proveedor en el update se actualiza, si no no se toca
-  campos.push('IDProvedor = ?'); 
+  campos.push('IDProveedor = ?'); 
   valores.push(product.IDProveedor)
+}
+
+if (product.IDCategoria !== undefined) { 
+  campos.push('IDCategoria = ?'); 
+  valores.push(product.IDCategoria)
 }
 
   return databaseOperation(async()=> {

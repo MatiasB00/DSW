@@ -50,6 +50,7 @@ const productoSchema = Joi.object({
   nombre: Joi.string().trim().min(1).max(150).required(),
   descripcion: Joi.string().allow('').required(),
   IDProveedor: Joi.number().integer().positive().allow(null).optional(),
+  IDCategoria: Joi.number().integer().positive().allow(null).optional()
 });
 
 const precioSchema = Joi.object({
