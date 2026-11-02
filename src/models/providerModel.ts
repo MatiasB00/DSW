@@ -41,7 +41,7 @@ export async function create(provider: providerInput): Promise<number> {
 }
 
 export async function update(id: number, provider: providerInput): Promise<boolean> {
-  
+
   const campos = ['cuit = ?', 'razonSocial = ?', 'email = ?']
   const values: SqlValue[] = [
     provider.cuit,
@@ -54,27 +54,27 @@ export async function update(id: number, provider: providerInput): Promise<boole
     values.push(provider.telefono)
   }
 
-if (provider.direccion !== undefined) {
+  if (provider.direccion !== undefined) {
     campos.push('direccion = ?')
     values.push(provider.direccion)
   }
 
-  return databaseOperation(async ()=> {
+  return databaseOperation(async () => {
     const updated = await result(
       `UPDATE Proveedor SET ${campos.join(',')} WHERE IDProveedor = ?`,
       [...values, id]
     ) as ResultSetHeader;
-    
+
     if (updated.affectedRows > 0) return true;
 
     return Boolean(await findOne(id)) // daria true si el update se hizo pero las filas eran iguales. false si no existe el provider
   })
 }
 
-export async function remove(id: number): Promise <boolean> {
+export async function remove(id: number): Promise<boolean> {
   return databaseOperation(async () => {
     const deleted = await result(
-      'DELETE FROM Provider WHERE IDProveedor = ?', [id]
+      'DELETE FROM Proveedor WHERE IDProveedor = ?', [id]
     ) as ResultSetHeader;
 
     return deleted.affectedRows > 0;
