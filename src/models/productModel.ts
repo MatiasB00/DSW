@@ -9,8 +9,8 @@ export interface productInput {
   IDCategoria?: number | null
 }
 
-export async function findAll(): Promise <RowDataPacket[]> {
-  return databaseOperation(()=>
+export async function findAll(): Promise<RowDataPacket[]> {
+  return databaseOperation(() =>
     rows(`
       SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
       COALESCE((
@@ -30,7 +30,7 @@ export async function findAll(): Promise <RowDataPacket[]> {
 }
 
 export async function findOne(id: number): Promise<RowDataPacket | undefined> {
-  const found = await databaseOperation(()=>
+  const found = await databaseOperation(() =>
     rows<RowDataPacket>(`
       SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
       COALESCE((
@@ -58,7 +58,7 @@ export async function create(product: productInput): Promise<number> {
     product.IDCategoria === undefined ? null : product.IDCategoria
   ];
 
-  return databaseOperation(async()=> {
+  return databaseOperation(async () => {
     const inserted = (await result(
       'INSERT INTO Producto (nombre, descripcion, IDProveedor, IDCategoria) VALUES (?, ?, ?, ?)', values
     )) as ResultSetHeader;
@@ -67,24 +67,24 @@ export async function create(product: productInput): Promise<number> {
 }
 
 export async function update(id: number, product: productInput): Promise<boolean> {
-  
+
   const campos = ['nombre = ?', 'descripcion = ?']
   const valores: SqlValue[] = [
     product.nombre,
-     product.descripcion
-    ] 
+    product.descripcion
+  ]
 
-if (product.IDProveedor !== undefined) { //si al producto le mandaron un proveedor en el update se actualiza, si no no se toca
-  campos.push('IDProveedor = ?'); 
-  valores.push(product.IDProveedor)
-}
+  if (product.IDProveedor !== undefined) { //si al producto le mandaron un proveedor en el update se actualiza, si no no se toca
+    campos.push('IDProveedor = ?');
+    valores.push(product.IDProveedor)
+  }
 
-if (product.IDCategoria !== undefined) { 
-  campos.push('IDCategoria = ?'); 
-  valores.push(product.IDCategoria)
-}
+  if (product.IDCategoria !== undefined) { 
+    campos.push('IDCategoria = ?'); 
+    valores.push(product.IDCategoria)
+  }
 
-  return databaseOperation(async()=> {
+  return databaseOperation(async () => {
     const updated = await result(
       `UPDATE Producto SET ${campos.join(', ')} WHERE IDProducto = ?`, [...valores, id]
     ) as ResultSetHeader;
@@ -95,8 +95,8 @@ if (product.IDCategoria !== undefined) {
   })
 }
 
-export async function remove(id:number): Promise <boolean> {
-  return databaseOperation(async()=> {
+export async function remove(id: number): Promise<boolean> {
+  return databaseOperation(async () => {
     const deleted = await result(
       'DELETE FROM Producto WHERE IDProducto = ?', [id]
     ) as ResultSetHeader;
