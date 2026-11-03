@@ -21,15 +21,40 @@ CREATE TABLE IF NOT EXISTS Proveedor (
   UNIQUE KEY uq_proveedor_cuit (cuit),
   UNIQUE KEY uq_proveedor_email (email)
 ) ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS Categoria (
+  IDCategoria INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nombre VARCHAR(30) UNIQUE NOT NULL,
+  PRIMARY KEY (IDCategoria)
+) ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS Producto (
   IDProducto INT UNSIGNED NOT NULL AUTO_INCREMENT,
   nombre VARCHAR(150) NOT NULL,
   descripcion TEXT NOT NULL,
   IDProveedor INT UNSIGNED NULL DEFAULT NULL,
+  IDCategoria INT UNSIGNED NULL DEFAULT NULL,
   PRIMARY KEY (IDProducto),
   KEY idx_producto_proveedor (IDProveedor),
+  KEY idx_producto_categoria (IDCategoria),
   CONSTRAINT fk_producto_proveedor FOREIGN KEY (IDProveedor) REFERENCES Proveedor (IDProveedor) ON UPDATE CASCADE ON DELETE
+  SET NULL,
+    CONSTRAINT fk_producto_categoria FOREIGN KEY (IDCategoria) REFERENCES Categoria (IDCategoria) ON UPDATE CASCADE ON DELETE
   SET NULL
+) ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS PreciosImpresiones (
+  fechaDesde DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  tamanio VARCHAR(30) NOT NULL,
+  precioTamanio DECIMAL (12, 2) UNSIGNED NOT NULL,
+  precioByN DECIMAL (12, 2) UNSIGNED NOT NULL,
+  precioColor DECIMAL (12, 2) UNSIGNED NOT NULL,
+  factorGanancia DECIMAL (4, 2) NOT NULL DEFAULT 1.00,
+  PRIMARY KEY (tamanio, fechaDesde),
+  CONSTRAINT chk_precioTamanio CHECK (precioTamanio >= 0),
+  CONSTRAINT chk_precioByN CHECK (precioByN >= 0),
+  CONSTRAINT chk_precioColor CHECK (precioColor >= 0),
+  CONSTRAINT chk_factorGanancia CHECK (
+    factorGanancia >= 1.00
+    AND factorGanancia <= 10.00
+  )
 ) ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS Pedido (
   IDPedido INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -52,7 +77,6 @@ CREATE TABLE IF NOT EXISTS PedidoImpresion (
   cantCopias INT UNSIGNED NOT NULL,
   faz VARCHAR(30) NOT NULL,
   tamanio VARCHAR(50) NOT NULL,
-  archivo VARCHAR(2048) NOT NULL,
   observacion TEXT NULL,
   subtotal DECIMAL(12, 2) NOT NULL,
   PRIMARY KEY (IDPedido),

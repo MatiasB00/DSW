@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCarrito } from '../context/carritoContext';
 import './Productos.css';
+import { BranchedMenu, BranchedMenuItem } from '../components/BranchedMenu';
 
 export interface ProductoItem {
     IDProducto: number;
     nombre: string;
     descripcion: string;
     precio: number | string;
+    IDCategoria?: number | null;
+    categoria?: string;
+}
+
+interface CategoriaItem {
+    IDCategoria: number;
+    nombre: string;
 }
 
 export function Productos() {
@@ -20,6 +28,8 @@ export function Productos() {
         setAgregadoId(prod.IDProducto);
         setTimeout(() => setAgregadoId(null), 1500);
     };
+    const [categorias, setCategorias] = useState<CategoriaItem[]>([]);
+    const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>('todas');
 
     const [busqueda, setBusqueda] = useState('');
     const [ordenPrecio, setOrdenPrecio] = useState<'defecto' | 'asc' | 'desc'>('defecto');
@@ -42,12 +52,38 @@ export function Productos() {
         cargarProductos();
     }, []);
 
+    useEffect(() => {
+        fetch('/api/categorias')
+            .then((res) => res.json())
+            .then((data) => setCategorias(data))
+            .catch((err) => console.error('Error al cargar categorías:', err));
+    }, []);
+
+    const menuItems: BranchedMenuItem[] = useMemo(() => [
+        {
+            label: 'Todas las Categorías',
+            value: 'todas',
+            children: [
+                { value: 'todas', label: 'Ver todos los productos' },
+                ...categorias.map((cat) => ({
+                    value: String(cat.IDCategoria),
+                    label: cat.nombre,
+                })),
+            ],
+        },
+    ], [categorias]);
+
     const productosFiltrados = useMemo(() => {
         let resultado = productos.filter((prod) => {
             const coincideTexto =
                 prod.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
                 (prod.descripcion && prod.descripcion.toLowerCase().includes(busqueda.toLowerCase()));
-            return coincideTexto;
+
+            const coincideCategoria =
+                categoriaSeleccionada === 'todas' ||
+                String(prod.IDCategoria) === categoriaSeleccionada;
+
+            return coincideTexto && coincideCategoria;
         });
 
         if (ordenPrecio === 'asc') {
@@ -57,13 +93,14 @@ export function Productos() {
         }
 
         return resultado;
-    }, [productos, busqueda, ordenPrecio]);
+    }, [productos, busqueda, ordenPrecio, categoriaSeleccionada]);
 
-    const hayFiltrosActivos = busqueda !== '' || ordenPrecio !== 'defecto';
+    const hayFiltrosActivos = busqueda !== '' || ordenPrecio !== 'defecto' || categoriaSeleccionada !== 'todas';
 
     const limpiarFiltros = () => {
         setBusqueda('');
         setOrdenPrecio('defecto');
+        setCategoriaSeleccionada('todas');
     };
 
     return (
@@ -97,6 +134,19 @@ export function Productos() {
                 </div>
 
                 <div className="selects-filter-group">
+                    <select
+                        className="catalog-select catalog-select-category-mobile"
+                        value={categoriaSeleccionada}
+                        onChange={(e) => setCategoriaSeleccionada(e.target.value)}
+                        aria-label="Filtrar por categoría"
+                    >
+                        <option value="todas">Categoría: Todas</option>
+                        {categorias.map((cat) => (
+                            <option key={cat.IDCategoria} value={String(cat.IDCategoria)}>
+                                {cat.nombre}
+                            </option>
+                        ))}
+                    </select>
 
                     <select
                         className="catalog-select"
@@ -110,70 +160,88 @@ export function Productos() {
                 </div>
             </section>
 
-            <div className="catalog-meta-row">
-                <span className="catalog-counter">
-                    Mostrando <strong>{productosFiltrados.length}</strong> de {productos.length} insumos
-                </span>
+            <div className="catalog-layout">
+                <aside className="catalog-sidebar" aria-label="Filtro de categorías">
+                    <h3 className="catalog-sidebar-title">Categorías</h3>
+                    <BranchedMenu
+                        items={menuItems}
+                        defaultOpen={[0]}
+                        defaultActive={categoriaSeleccionada}
+                        onSelect={(val) => setCategoriaSeleccionada(val)}
+                        color="#2b211b"
+                        accentColor="#b91c1c"
+                        lineColor="#ebdcd0"
+                        width={240}
+                    />
+                </aside>
 
-                {hayFiltrosActivos && (
-                    <button type="button" className="btn-reset-filters" onClick={limpiarFiltros}>
-                        Limpiar filtros
-                    </button>
-                )}
-            </div>
+                <section className="catalog-content">
+                    <div className="catalog-meta-row">
+                        <span className="catalog-counter">
+                            Mostrando <strong>{productosFiltrados.length}</strong> de {productos.length} insumos
+                        </span>
 
-            {cargando ? (
-                <div className="catalog-status-box">
-                    <p>Cargando catálogo de insumos...</p>
-                </div>
-            ) : error ? (
-                <div className="catalog-status-box catalog-error">
-                    <p>{error}</p>
-                </div>
-            ) : productosFiltrados.length === 0 ? (
-                <div className="catalog-status-box">
-                    <p className="catalog-empty-title">No se encontraron productos</p>
-                    <p className="catalog-empty-desc">
-                        No hay insumos que coincidan con los filtros aplicados.
-                    </p>
-                    {hayFiltrosActivos && (
-                        <button type="button" className="btn-reset-filters" onClick={limpiarFiltros}>
-                            Restablecer todos los filtros
-                        </button>
-                    )}
-                </div>
-            ) : (
-                <div className="catalog-grid">
-                    {productosFiltrados.map((prod) => (
-                        <article key={prod.IDProducto} className="catalog-card">
-                            <div className="catalog-card-body">
+                        {hayFiltrosActivos && (
+                            <button type="button" className="btn-reset-filters" onClick={limpiarFiltros}>
+                                Limpiar filtros
+                            </button>
+                        )}
+                    </div>
 
-                                <h2 className="catalog-card-title">{prod.nombre}</h2>
-
-                                <p className="catalog-card-desc" title={prod.descripcion}>
-                                    {prod.descripcion || 'Sin descripción disponible para este insumo.'}
-                                </p>
-                            </div>
-
-                            <div className="catalog-card-footer">
-                                <div className="catalog-card-price-block">
-                                    <span className="catalog-price-label">Precio Unitario</span>
-                                    <span className="catalog-price-val">
-                                        ${Number(prod.precio).toLocaleString('es-AR', {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
-                                    </span>
-                                </div>
-
-                                <button type="button" className={`btn-add-order ${agregadoId === prod.IDProducto ? 'btn-added' : ''}`} onClick={() => handleAgregar(prod)}>
-                                    {agregadoId === prod.IDProducto ? '¡Agregado!' : 'Agregar al Pedido'}
+                    {cargando ? (
+                        <div className="catalog-status-box">
+                            <p>Cargando catálogo de insumos...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="catalog-status-box catalog-error">
+                            <p>{error}</p>
+                        </div>
+                    ) : productosFiltrados.length === 0 ? (
+                        <div className="catalog-status-box">
+                            <p className="catalog-empty-title">No se encontraron productos</p>
+                            <p className="catalog-empty-desc">
+                                No hay insumos que coincidan con los filtros aplicados.
+                            </p>
+                            {hayFiltrosActivos && (
+                                <button type="button" className="btn-reset-filters" onClick={limpiarFiltros}>
+                                    Restablecer todos los filtros
                                 </button>
-                            </div>
-                        </article>
-                    ))}
-                </div>
-            )}
+                            )}
+                        </div>
+                    ) : (
+                        <div className="catalog-grid">
+                            {productosFiltrados.map((prod) => (
+                                <article key={prod.IDProducto} className="catalog-card">
+                                    <div className="catalog-card-body">
+
+                                        <h2 className="catalog-card-title">{prod.nombre}</h2>
+
+                                        <p className="catalog-card-desc" title={prod.descripcion}>
+                                            {prod.descripcion || 'Sin descripción disponible para este insumo.'}
+                                        </p>
+                                    </div>
+
+                                    <div className="catalog-card-footer">
+                                        <div className="catalog-card-price-block">
+                                            <span className="catalog-price-label">Precio Unitario</span>
+                                            <span className="catalog-price-val">
+                                                ${Number(prod.precio).toLocaleString('es-AR', {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
+                                            </span>
+                                        </div>
+
+                                        <button type="button" className={`btn-add-order ${agregadoId === prod.IDProducto ? 'btn-added' : ''}`} onClick={() => handleAgregar(prod)}>
+                                            {agregadoId === prod.IDProducto ? '¡Agregado!' : 'Agregar al Pedido'}
+                                        </button>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </section>
+            </div>
         </main>
     );
 }

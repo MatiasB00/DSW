@@ -8,20 +8,25 @@ export interface Producto {
     precio: number | string;
     IDProveedor?: number;
     proveedorNombre?: string;
+    IDCategoria?: number | null;
+    categoria?: string;
 }
 
 interface ProductFormProps {
     productoAEditar: Producto | null;
+    versionCategorias?: number;
     onGuardarExito: () => void;
     onCancelarEdicion: () => void;
 }
 
-export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion }: ProductFormProps) {
+export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion, versionCategorias }: ProductFormProps) {
     const [nombre, setNombre] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [precio, setPrecio] = useState('');
     const [idProveedor, setIdProveedor] = useState<number | ''>('');
+    const [idCategoria, setIdCategoria] = useState<number | ''>('');
     const [proveedores, setProveedores] = useState<Array<{ IDProveedor: number; razonSocial: string }>>([]);
+    const [categorias, setCategorias] = useState<Array<{ IDCategoria: number; nombre: string }>>([]);
     const [cargando, setCargando] = useState(false);
     const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
 
@@ -32,18 +37,29 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
             .catch((err) => console.error('Error al cargar proveedores:', err));
     }, []);
 
+
+    useEffect(() => {
+        fetch('/api/categorias')
+            .then((res) => res.json())
+            .then((data) => setCategorias(data))
+            .catch((err) => console.error('Error al cargar categorías:', err));
+    }, [versionCategorias]);
+
+
     useEffect(() => {
         if (productoAEditar) {
             setNombre(productoAEditar.nombre);
             setDescripcion(productoAEditar.descripcion || '');
             setPrecio(String(productoAEditar.precio));
             setIdProveedor(productoAEditar.IDProveedor || '');
+            setIdCategoria(productoAEditar.IDCategoria || '');
             setMensaje(null);
         } else {
             setNombre('');
             setDescripcion('');
             setPrecio('');
             setIdProveedor('');
+            setIdCategoria('');
         }
     }, [productoAEditar]);
 
@@ -63,6 +79,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                         nombre: nombre.trim(),
                         descripcion: descripcion.trim(),
                         IDProveedor: idProveedor ? Number(idProveedor) : null,
+                        IDCategoria: idCategoria ? Number(idCategoria) : null,
                     }),
                 });
                 if (!resProd.ok) throw new Error('No se pudo actualizar el producto.');
@@ -84,6 +101,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                         nombre: nombre.trim(),
                         descripcion: descripcion.trim(),
                         IDProveedor: idProveedor ? Number(idProveedor) : null,
+                        IDCategoria: idCategoria ? Number(idCategoria) : null,
                     }),
                 });
                 if (!resProd.ok) throw new Error('Error al crear el producto.');
@@ -101,6 +119,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                 setDescripcion('');
                 setPrecio('');
                 setIdProveedor('');
+                setIdCategoria('');
             }
 
             onGuardarExito();
@@ -159,6 +178,23 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                         {proveedores.map((prov) => (
                             <option key={prov.IDProveedor} value={prov.IDProveedor}>
                                 {prov.razonSocial}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="form-group-item">
+                    <label htmlFor="prod-categoria" className="field-label">Categoría</label>
+                    <select
+                        id="prod-categoria"
+                        className="field-control"
+                        value={idCategoria}
+                        onChange={(e) => setIdCategoria(e.target.value ? Number(e.target.value) : '')}
+                    >
+                        <option value="">-- Sin Categoría --</option>
+                        {categorias.map((cat) => (
+                            <option key={cat.IDCategoria} value={cat.IDCategoria}>
+                                {cat.nombre}
                             </option>
                         ))}
                     </select>

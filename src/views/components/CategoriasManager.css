@@ -1,0 +1,220 @@
+.category-manager-card {
+    background-color: #fffdfa;
+    border: 1px solid #ebdcd0;
+    border-radius: 10px;
+    padding-inline: 1.5rem;
+    padding-block: 1.5rem;
+    box-shadow: 0 4px 16px rgba(60, 40, 30, 0.04);
+    margin-block-end: 2rem;
+    box-sizing: border-box;
+}
+
+.category-manager-header {
+    margin-block-end: 1rem;
+    text-align: left;
+}
+
+.category-manager-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2b211b;
+    margin: 0;
+    margin-block-end: 0.25rem;
+}
+
+.category-manager-subtitle {
+    font-size: 0.88rem;
+    color: #736257;
+    margin: 0;
+}
+
+.category-feedback {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-inline: 0.85rem;
+    padding-block: 0.6rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-block-end: 1rem;
+}
+
+.category-feedback-exito {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.category-feedback-error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.category-close-alert {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    margin-inline-start: 0.5rem;
+}
+
+.category-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-block-end: 1.5rem;
+}
+
+.category-input {
+    inline-size: 100%;
+    padding-inline: 0.85rem;
+    padding-block: 0.65rem;
+    border: 1px solid #ebdcd0;
+    border-radius: 6px;
+    background-color: #faf6f0;
+    color: #2b211b;
+    font-size: 0.95rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.category-input:focus {
+    border-color: #b91c1c;
+    background-color: #ffffff;
+}
+
+.btn-category-submit {
+    background-color: #b91c1c;
+    color: #ffffff;
+    padding-inline: 1.25rem;
+    padding-block: 0.65rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-category-submit:hover:not(:disabled) {
+    background-color: #991b1b;
+}
+
+.btn-category-cancel {
+    background-color: #f3ece4;
+    color: #55453b;
+    padding-inline: 1rem;
+    padding-block: 0.65rem;
+    border: 1px solid #ebdcd0;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-category-cancel:hover {
+    background-color: #ebdcd0;
+}
+
+.category-list-container {
+    border-top: 1px solid #ebdcd0;
+    padding-block-start: 1rem;
+    text-align: left;
+}
+
+.category-list-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #55453b;
+    display: block;
+    margin-block-end: 0.75rem;
+}
+
+.category-empty-text {
+    font-size: 0.88rem;
+    color: #887467;
+    font-style: italic;
+    margin: 0;
+}
+
+.category-chips-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #faf6f0;
+    border: 1px solid #ebdcd0;
+    border-radius: 6px;
+    padding-inline: 0.75rem;
+    padding-block: 0.4rem;
+    transition: all 0.2s ease;
+}
+
+.category-chip:hover {
+    border-color: #d1b8a5;
+    background-color: #fffdfa;
+}
+
+.category-chip-active {
+    border-color: #b91c1c;
+    background-color: #fef2f2;
+}
+
+.category-chip-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #2b211b;
+}
+
+.category-chip-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-inline-start: 0.25rem;
+}
+
+.btn-chip-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 0.15rem;
+    border-radius: 4px;
+    color: #736257;
+    transition: all 0.2s ease;
+}
+
+.btn-chip-edit:hover {
+    color: #2b211b;
+    background-color: #ebdcd0;
+}
+
+.btn-chip-delete:hover {
+    color: #b91c1c;
+    background-color: #fee2e2;
+}
+
+@media (min-width: 640px) {
+    .category-form-row {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .category-input {
+        flex: 1;
+    }
+}
