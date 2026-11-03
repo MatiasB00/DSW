@@ -5,7 +5,8 @@ import * as priceController from './controllers/priceController';
 import * as authController from './controllers/authController';
 import * as userController from './controllers/userController';
 import * as productController from './controllers/productController';
-import * as providerController from './controllers/providerController'
+import * as providerController from './controllers/providerController';
+import * as categoryController from './controllers/categoryController';
 
 const idParams = Joi.object({
   id: Joi.number().integer().positive().max(4294967295).required(),
@@ -111,6 +112,10 @@ const updatePrintSchema = Joi.object({
   subtotal: Joi.number().precision(2).min(0).max(9999999999.99),
 }).min(1);
 
+const categoriaSchema = Joi.object({
+  nombre: Joi.string().trim().min(1).max(30).required(),
+});
+
 export const routes: ServerRoute[] = [
   {
     method: 'POST',
@@ -134,21 +139,21 @@ export const routes: ServerRoute[] = [
   {
     method: 'GET',
     path: '/api/proveedores/{id}',
-    options: { validate : { params: idParams } },
+    options: { validate: { params: idParams } },
     handler: providerController.get()
   },
 
   {
     method: 'POST',
     path: '/api/proveedores',
-    options: { validate: { payload: proveedorSchema} },
+    options: { validate: { payload: proveedorSchema } },
     handler: providerController.create()
   },
 
   {
     method: 'PUT',
     path: '/api/proveedores/{id}',
-    options: { validate: {params: idParams, payload: proveedorSchema} },
+    options: { validate: { params: idParams, payload: proveedorSchema } },
     handler: providerController.update()
   },
 
@@ -159,7 +164,7 @@ export const routes: ServerRoute[] = [
     handler: providerController.remove()
   },
 
-{
+  {
     method: 'GET',
     path: '/api/usuarios',
     handler: userController.list()
@@ -168,21 +173,21 @@ export const routes: ServerRoute[] = [
   {
     method: 'GET',
     path: '/api/usuarios/{id}',
-    options: { validate : { params: idParams } },
+    options: { validate: { params: idParams } },
     handler: userController.get()
   },
 
   {
     method: 'POST',
     path: '/api/usuarios',
-    options: { validate: { payload: usuarioSchema} },
+    options: { validate: { payload: usuarioSchema } },
     handler: userController.create()
   },
 
   {
     method: 'PUT',
     path: '/api/usuarios/{id}',
-    options: { validate: {params: idParams, payload: usuarioSchema} },
+    options: { validate: { params: idParams, payload: usuarioSchema } },
     handler: userController.update()
   },
 
@@ -202,21 +207,21 @@ export const routes: ServerRoute[] = [
   {
     method: 'GET',
     path: '/api/productos/{id}',
-    options: { validate : { params: idParams } },
+    options: { validate: { params: idParams } },
     handler: productController.get()
   },
 
   {
     method: 'POST',
     path: '/api/productos',
-    options: { validate: { payload: productoSchema} },
+    options: { validate: { payload: productoSchema } },
     handler: productController.create()
   },
 
   {
     method: 'PUT',
     path: '/api/productos/{id}',
-    options: { validate: {params: idParams, payload: productoSchema} },
+    options: { validate: { params: idParams, payload: productoSchema } },
     handler: productController.update()
   },
 
@@ -244,6 +249,36 @@ export const routes: ServerRoute[] = [
     options: { validate: { params: idParams, payload: precioSchema } },
     handler: priceController.create,
   },
+  {
+    method: 'GET',
+    path: '/api/categorias',
+    handler: categoryController.list()
+  },
+  {
+    method: 'GET',
+    path: '/api/categorias/{id}',
+    options: { validate: { params: idParams } },
+    handler: categoryController.get()
+  },
+  {
+    method: 'POST',
+    path: '/api/categorias',
+    options: { validate: { payload: categoriaSchema } },
+    handler: categoryController.create()
+  },
+  {
+    method: 'PUT',
+    path: '/api/categorias/{id}',
+    options: { validate: { params: idParams, payload: categoriaSchema } },
+    handler: categoryController.update()
+  },
+  {
+    method: 'DELETE',
+    path: '/api/categorias/{id}',
+    options: { validate: { params: idParams } },
+    handler: categoryController.remove()
+  },
+
   {
     method: 'GET',
     path: '/api/pedidos/{id}',
