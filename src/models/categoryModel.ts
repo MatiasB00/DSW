@@ -7,7 +7,7 @@ export interface CategoryInput {
 
 export async function findAll(): Promise<RowDataPacket[]> {
     return databaseOperation(() =>
-        rows('SELECT IDCategoria, nombre FROM Categoria ORDER BY IDCategoria')
+        rows('SELECT IDCategoria, nombre FROM Categoria ORDER BY nombre ASC')
     );
 }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProductForm, Producto } from '../components/ProductForm';
 import { ProveedoresForm, Proveedor } from '../components/ProveedoresForm';
+import { CategoriasManager } from '../components/categoriasManager';
 import './Adminpanel.css';
 
 export function Adminpanel() {
@@ -10,7 +11,11 @@ export function Adminpanel() {
     const [productos, setProductos] = useState<Producto[]>([]);
     const [cargandoProductos, setCargandoProductos] = useState(true);
     const [productoAEditar, setProductoAEditar] = useState<Producto | null>(null);
-
+    const [versionCategorias, setVersionCategorias] = useState(0);
+    const refrescarCategorias = () => {
+        setVersionCategorias((prev) => prev + 1);
+        cargarProductos();
+    };
 
     const [proveedores, setProveedores] = useState<Proveedor[]>([]);
     const [cargandoProveedores, setCargandoProveedores] = useState(true);
@@ -180,11 +185,16 @@ export function Adminpanel() {
                 <>
                     <ProductForm
                         productoAEditar={productoAEditar}
+                        versionCategorias={versionCategorias}
                         onGuardarExito={() => {
                             cargarProductos();
                             setProductoAEditar(null);
                         }}
                         onCancelarEdicion={() => setProductoAEditar(null)}
+                    />
+
+                    <CategoriasManager
+                        onCategoriasChange={refrescarCategorias}
                     />
 
                     <section className="admin-section">
@@ -210,7 +220,7 @@ export function Adminpanel() {
                                             </div>
 
                                             <div className="product-item-prov">
-                                                {prod.proveedorNombre || 'Proveedor no especificado'}
+                                                {prod.categoria ? `${prod.categoria} • ` : ''}{prod.proveedorNombre || 'Proveedor no especificado'}
                                             </div>
 
                                             <p className="product-item-desc" title={prod.descripcion}>
