@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProductForm, Producto } from '../components/ProductForm';
 import { ProveedoresForm, Proveedor } from '../components/ProveedoresForm';
-import { CategoriasManager } from '../components/categoriasManager';
+import { CategoriasManager } from '../components/CategoriasManager';
 import './Adminpanel.css';
 
 export function Adminpanel() {
