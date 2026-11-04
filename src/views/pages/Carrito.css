@@ -293,6 +293,19 @@
     color: #b91c1c;
 }
 
+.btn-confirm-order:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.cart-error-message {
+    color: #b91c1c;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0;
+    text-align: center;
+}
+
 @media (min-width: 640px) {
     .cart-container {
         padding-inline: 2rem;

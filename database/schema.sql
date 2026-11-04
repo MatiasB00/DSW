@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS PedidoImpresion (
   cantCopias INT UNSIGNED NOT NULL,
   faz VARCHAR(30) NOT NULL,
   tamanio VARCHAR(50) NOT NULL,
+  archivo VARCHAR(2048) NULL,
   observacion TEXT NULL,
   subtotal DECIMAL(12, 2) NOT NULL,
   PRIMARY KEY (IDPedido),

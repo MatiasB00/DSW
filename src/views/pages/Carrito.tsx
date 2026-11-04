@@ -1,9 +1,14 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCarrito } from '../context/carritoContext';
 import './Carrito.css';
 
+
+
 export function Carrito() {
+
+    const navigate = useNavigate();
+
     const {
         items,
         actualizarCantidad,
@@ -13,8 +18,48 @@ export function Carrito() {
         totalPrecio,
     } = useCarrito();
 
-    const handleConfirmarPedido = () => {
-        alert('¡Pedido registrado! Próximamente se conectará con la generación de pedidos en la base de datos.');
+    const [enviando, setEnviando] = useState(false);
+    const [errorPedido, setErrorPedido] = useState<string | null>(null);
+
+    const handleConfirmarPedido = async () => {
+        setErrorPedido(null);
+        const usuarioGuardado = localStorage.getItem('user');
+        const usuario = usuarioGuardado ? JSON.parse(usuarioGuardado) : null;
+        if (!usuario || !usuario.IDUsuario) {
+            alert('Debés iniciar sesión para confirmar tu pedido.');
+            navigate('/login');
+            return;
+        }
+        if (items.length === 0) return;
+        setEnviando(true);
+        try {
+            const res = await fetch('/api/pedidos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    IDUsuario: usuario.IDUsuario,
+                    tipo: 'insumo',
+                    estado: 'En preparación',
+                    items: items.map((item) => ({
+                        IDProducto: item.IDProducto,
+                        cantidad: item.cantidad,
+                    })),
+                }),
+            });
+            if (!res.ok) {
+                const dataErr = await res.json().catch(() => ({}));
+                throw new Error(dataErr.message || 'Error al procesar el pedido.');
+            }
+            const pedidoCreado = await res.json();
+            vaciarCarrito();
+            navigate('/perfil', { state: { nuevoPedidoId: pedidoCreado.IDPedido } });
+        } catch (err: any) {
+            setErrorPedido(err.message || 'No se pudo confirmar el pedido.');
+        } finally {
+            setEnviando(false);
+        }
     };
 
     return (
@@ -136,12 +181,16 @@ export function Carrito() {
                             </span>
                         </div>
 
+                        {errorPedido && (
+                            <p className="cart-error-message">{errorPedido}</p>
+                        )}
                         <button
                             type="button"
                             className="btn-confirm-order"
                             onClick={handleConfirmarPedido}
+                            disabled={enviando}
                         >
-                            Confirmar Pedido
+                            {enviando ? 'Confirmando pedido...' : 'Confirmar Pedido'}
                         </button>
 
                         <Link to="/productos" className="link-continue-shopping">
