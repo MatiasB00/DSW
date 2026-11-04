@@ -62,6 +62,25 @@ async function insertItems(
 ): Promise<number> {
   let totalCents = 0;
   for (const item of items) {
+    const productsStock = await rows<RowDataPacket>(
+      'SELECT nombre, stock FROM Producto WHERE IDProducto = ? FOR UPDATE',
+      [item.IDProducto],
+      connection,
+    );
+    if (!productsStock[0]) {
+      throw Boom.notFound(`El producto ${item.IDProducto} no tiene stock.`);
+    }
+    const prodActual = productsStock[0];
+    if (prodActual.stock < item.cantidad) {
+      throw Boom.badRequest(
+        `Stock insuficiente para "${prodActual.nombre}". Stock disponible: ${prodActual.stock}, solicitado: ${item.cantidad}.`
+      );
+    }
+    await result(
+      'UPDATE Producto SET stock = stock - ? WHERE IDProducto = ?',
+      [item.cantidad, item.IDProducto],
+      connection,
+    );
     const products = await rows<RowDataPacket>(
       `SELECT prec.valor AS precio 
        FROM Precio prec 
@@ -96,17 +115,21 @@ async function ensureUser(connection: PoolConnection, userId: number): Promise<v
   if (!users[0]) throw Boom.notFound(`No existe el usuario ${userId}.`);
 }
 
-export async function list(): Promise<RowDataPacket[]> {
+export async function list(userId?: number): Promise<RowDataPacket[]> {
+  const whereClause = userId ? 'WHERE p.IDUsuario = ?' : '';
+  const params: SqlValue[] = userId ? [userId] : [];
   return databaseOperation(() =>
     rows(
-      `SELECT p.*, u.nombre AS usuarioNombre,
+      `SELECT p.*, u.nombre AS usuarioNombre, u.apellido AS usuarioApellido, u.email AS usuarioEmail,
         CASE WHEN pi.IDPedido IS NOT NULL THEN 'impresion'
              WHEN pin.IDPedido IS NOT NULL THEN 'insumo' END AS tipo
        FROM Pedido p
        JOIN Usuario u ON u.IDUsuario = p.IDUsuario
        LEFT JOIN PedidoInsumo pin ON pin.IDPedido = p.IDPedido
        LEFT JOIN PedidoImpresion pi ON pi.IDPedido = p.IDPedido
-       ORDER BY p.IDPedido`,
+       ${whereClause}
+       ORDER BY p.IDPedido DESC`,
+      params,
     ),
   );
 }

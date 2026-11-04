@@ -5,6 +5,7 @@ export interface Producto {
     IDProducto: number;
     nombre: string;
     descripcion: string;
+    stock?: number;
     precio: number | string;
     IDProveedor?: number;
     proveedorNombre?: string;
@@ -21,7 +22,8 @@ interface ProductFormProps {
 
 export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion, versionCategorias }: ProductFormProps) {
     const [nombre, setNombre] = useState('');
-    const [descripcion, setDescripcion] = useState('');
+    const [descripcion, setDescripcion] = useState('')
+    const [stock, setStock] = useState<number | ''>('');
     const [precio, setPrecio] = useState('');
     const [idProveedor, setIdProveedor] = useState<number | ''>('');
     const [idCategoria, setIdCategoria] = useState<number | ''>('');
@@ -50,6 +52,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
         if (productoAEditar) {
             setNombre(productoAEditar.nombre);
             setDescripcion(productoAEditar.descripcion || '');
+            setStock(productoAEditar.stock !== undefined ? productoAEditar.stock : '');
             setPrecio(String(productoAEditar.precio));
             setIdProveedor(productoAEditar.IDProveedor || '');
             setIdCategoria(productoAEditar.IDCategoria || '');
@@ -57,6 +60,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
         } else {
             setNombre('');
             setDescripcion('');
+            setStock('');
             setPrecio('');
             setIdProveedor('');
             setIdCategoria('');
@@ -78,6 +82,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                     body: JSON.stringify({
                         nombre: nombre.trim(),
                         descripcion: descripcion.trim(),
+                        stock: stock !== '' ? Number(stock) : 0,
                         IDProveedor: idProveedor ? Number(idProveedor) : null,
                         IDCategoria: idCategoria ? Number(idCategoria) : null,
                     }),
@@ -100,6 +105,8 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                     body: JSON.stringify({
                         nombre: nombre.trim(),
                         descripcion: descripcion.trim(),
+                        stock: stock !== '' ? Number(stock) : 0,
+
                         IDProveedor: idProveedor ? Number(idProveedor) : null,
                         IDCategoria: idCategoria ? Number(idCategoria) : null,
                     }),
@@ -117,6 +124,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                 setMensaje({ tipo: 'exito', texto: '¡Producto y precio inicial creados con éxito!' });
                 setNombre('');
                 setDescripcion('');
+                setStock('');
                 setPrecio('');
                 setIdProveedor('');
                 setIdCategoria('');
@@ -211,6 +219,21 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                         placeholder="Ej: 12500.00"
                         value={precio}
                         onChange={(e) => setPrecio(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="form-group-item">
+                    <label htmlFor="prod-stock" className="field-label">Stock Inicial *</label>
+                    <input
+                        id="prod-stock"
+                        type="number"
+                        min="0"
+                        step="1"
+                        className="field-control"
+                        placeholder="Ej: 100"
+                        value={stock}
+                        onChange={(e) => setStock(e.target.value === '' ? '' : Number(e.target.value))}
                         required
                     />
                 </div>

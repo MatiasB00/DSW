@@ -2,8 +2,9 @@ import Boom from '@hapi/boom';
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import * as orders from '../models/orderModel';
 
-export async function list(_request: Request, h: ResponseToolkit) {
-  return h.response(await orders.list()).code(200);
+export async function list(request: Request, h: ResponseToolkit) {
+  const userId = request.query.userId ? Number(request.query.userId) : undefined;
+  return h.response(await orders.list(userId)).code(200);
 }
 
 export async function get(request: Request, h: ResponseToolkit) {

@@ -223,6 +223,10 @@ export function Adminpanel() {
                                                 {prod.categoria ? `${prod.categoria} • ` : ''}{prod.proveedorNombre || 'Proveedor no especificado'}
                                             </div>
 
+                                            <div className="product-item-stock">
+                                                <strong> Stock: {prod.stock ?? 0} u.</strong>
+                                            </div>
+
                                             <p className="product-item-desc" title={prod.descripcion}>
                                                 {prod.descripcion || 'Sin descripción.'}
                                             </p>

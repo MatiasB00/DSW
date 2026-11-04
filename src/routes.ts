@@ -50,6 +50,7 @@ const proveedorSchema = Joi.object({
 const productoSchema = Joi.object({
   nombre: Joi.string().trim().min(1).max(150).required(),
   descripcion: Joi.string().allow('').required(),
+  stock: Joi.number().integer().min(0).default(0).optional(),
   IDProveedor: Joi.number().integer().positive().allow(null).optional(),
   IDCategoria: Joi.number().integer().positive().allow(null).optional()
 });

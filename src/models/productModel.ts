@@ -3,16 +3,17 @@ import { databaseOperation, result, rows, SqlValue } from '../db';
 
 
 export interface productInput {
-  nombre: string,
-  descripcion: string,
-  IDProveedor?: number | null
-  IDCategoria?: number | null
+  nombre: string;
+  descripcion: string;
+  stock?: number;
+  IDProveedor?: number | null;
+  IDCategoria?: number | null;
 }
 
 export async function findAll(): Promise<RowDataPacket[]> {
   return databaseOperation(() =>
     rows(`
-      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
+      SELECT p.IDProducto, p.nombre, p.descripcion, p.stock, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
       COALESCE((
         SELECT prec.valor
         FROM Precio prec
@@ -32,7 +33,7 @@ export async function findAll(): Promise<RowDataPacket[]> {
 export async function findOne(id: number): Promise<RowDataPacket | undefined> {
   const found = await databaseOperation(() =>
     rows<RowDataPacket>(`
-      SELECT p.IDProducto, p.nombre, p.descripcion, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
+      SELECT p.IDProducto, p.nombre, p.descripcion, p.stock, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
       COALESCE((
         SELECT prec.valor
         FROM Precio prec
@@ -54,13 +55,14 @@ export async function create(product: productInput): Promise<number> {
   const values: SqlValue[] = [
     product.nombre,
     product.descripcion,
+    product.stock ?? 0,
     product.IDProveedor === undefined ? null : product.IDProveedor,
     product.IDCategoria === undefined ? null : product.IDCategoria
   ];
 
   return databaseOperation(async () => {
     const inserted = (await result(
-      'INSERT INTO Producto (nombre, descripcion, IDProveedor, IDCategoria) VALUES (?, ?, ?, ?)', values
+      'INSERT INTO Producto (nombre, descripcion, stock, IDProveedor, IDCategoria) VALUES (?, ?, ?, ?, ?)', values
     )) as ResultSetHeader;
     return inserted.insertId;
   })
@@ -79,8 +81,13 @@ export async function update(id: number, product: productInput): Promise<boolean
     valores.push(product.IDProveedor)
   }
 
-  if (product.IDCategoria !== undefined) { 
-    campos.push('IDCategoria = ?'); 
+  if (product.stock !== undefined) {
+    campos.push('stock = ?');
+    valores.push(product.stock);
+  }
+
+  if (product.IDCategoria !== undefined) {
+    campos.push('IDCategoria = ?');
     valores.push(product.IDCategoria)
   }
 
