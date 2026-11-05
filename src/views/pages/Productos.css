@@ -156,6 +156,10 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+.catalog-card.clickeable {
+    cursor: pointer;
+}
+
 .catalog-card:hover {
     transform: translateY(-2px);
     border-color: #d1b8a5;
@@ -221,6 +225,25 @@
     line-height: 1.2;
 }
 
+.btn-view-details {
+    inline-size: 100%;
+    background-color: #faf6f0;
+    color: #2b211b;
+    border: 1px solid #ebdcd0;
+    border-radius: 6px;
+    padding-block: 0.65rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-view-details:hover {
+    background-color: #f5ebe1;
+    border-color: #b91c1c;
+    color: #b91c1c;
+}
+
 .btn-add-order {
     inline-size: 100%;
     background-color: #b91c1c;
@@ -233,8 +256,6 @@
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
-
-
 
 .btn-add-order:hover {
     background-color: #991b1b;
@@ -272,7 +293,6 @@
 }
 
 
-/* Mobile-First: el menú lateral se oculta en móviles */
 .catalog-sidebar {
     display: none;
 }

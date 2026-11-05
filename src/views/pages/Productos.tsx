@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useCarrito } from '../context/carritoContext';
 import './Productos.css';
 import { BranchedMenu, BranchedMenuItem } from '../components/BranchedMenu';
+import { ProductoModal } from '../components/ProductoModal';
 
 export interface ProductoItem {
     IDProducto: number;
@@ -10,6 +11,7 @@ export interface ProductoItem {
     precio: number | string;
     IDCategoria?: number | null;
     categoria?: string;
+    imagenes?: { url: string }[];
 }
 
 interface CategoriaItem {
@@ -23,11 +25,14 @@ export function Productos() {
     const [error, setError] = useState<string | null>(null);
     const { agregarProducto } = useCarrito();
     const [agregadoId, setAgregadoId] = useState<number | null>(null);
+    const [productoSeleccionado, setProductoSeleccionado] = useState<ProductoItem | null>(null);
+
     const handleAgregar = (prod: ProductoItem) => {
         agregarProducto(prod);
         setAgregadoId(prod.IDProducto);
         setTimeout(() => setAgregadoId(null), 1500);
     };
+
     const [categorias, setCategorias] = useState<CategoriaItem[]>([]);
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>('todas');
 
@@ -211,11 +216,13 @@ export function Productos() {
                     ) : (
                         <div className="catalog-grid">
                             {productosFiltrados.map((prod) => (
-                                <article key={prod.IDProducto} className="catalog-card">
+                                <article
+                                    key={prod.IDProducto}
+                                    className="catalog-card clickeable"
+                                    onClick={() => setProductoSeleccionado(prod)}
+                                >
                                     <div className="catalog-card-body">
-
                                         <h2 className="catalog-card-title">{prod.nombre}</h2>
-
                                         <p className="catalog-card-desc" title={prod.descripcion}>
                                             {prod.descripcion || 'Sin descripción disponible para este insumo.'}
                                         </p>
@@ -232,8 +239,15 @@ export function Productos() {
                                             </span>
                                         </div>
 
-                                        <button type="button" className={`btn-add-order ${agregadoId === prod.IDProducto ? 'btn-added' : ''}`} onClick={() => handleAgregar(prod)}>
-                                            {agregadoId === prod.IDProducto ? '¡Agregado!' : 'Agregar al Pedido'}
+                                        <button
+                                            type="button"
+                                            className="btn-view-details"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setProductoSeleccionado(prod);
+                                            }}
+                                        >
+                                            Ver detalles
                                         </button>
                                     </div>
                                 </article>
@@ -242,6 +256,13 @@ export function Productos() {
                     )}
                 </section>
             </div>
+
+            <ProductoModal
+                producto={productoSeleccionado}
+                onClose={() => setProductoSeleccionado(null)}
+                onAgregar={handleAgregar}
+                agregadoId={agregadoId}
+            />
         </main>
     );
 }

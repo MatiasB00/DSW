@@ -1,0 +1,214 @@
+body.modal-open {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(43, 33, 27, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 1rem;
+  padding-block: 1rem;
+  z-index: 1000;
+  overscroll-behavior: contain;
+}
+
+.product-modal-content {
+  background-color: #fffdfa;
+  border: 1px solid #ebdcd0;
+  border-radius: 10px;
+  inline-size: 100%;
+  max-inline-size: 580px;
+  max-block-size: 90dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 32px rgba(43, 33, 27, 0.18);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding-inline: 1.5rem;
+  padding-block: 1.25rem 1rem;
+  border-bottom: 1px solid #ebdcd0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.modal-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #2b211b;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.modal-close-icon {
+  background: none;
+  border: none;
+  color: #736257;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.modal-close-icon:hover {
+  color: #b91c1c;
+  transform: scale(1.1);
+}
+
+.product-modal-body {
+  padding-inline: 1.5rem;
+  padding-block: 1.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.product-modal-img-container {
+  inline-size: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  background-color: #faf6f0;
+  border: 1px solid #ebdcd0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.product-modal-img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.product-modal-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #a39084;
+  font-size: 0.8rem;
+  font-weight: 600;
+  user-select: none;
+}
+
+.product-modal-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.product-modal-desc {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #55453b;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.product-modal-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.product-modal-price-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #736257;
+}
+
+.product-modal-price-val {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #b91c1c;
+  line-height: 1.2;
+}
+
+.product-modal-footer {
+  padding-inline: 1.5rem;
+  padding-block: 1rem 1.25rem;
+  border-top: 1px solid #ebdcd0;
+  background-color: #fffdfa;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.75rem;
+}
+
+.btn-modal-close {
+  padding-inline: 1.25rem;
+  padding-block: 0.7rem;
+  border: none;
+  color: #55453b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn-modal-close:hover {
+  color: #2b211b;
+}
+
+.product-modal-footer .btn-add-order {
+  padding-inline: 1.5rem;
+  padding-block: 0.7rem;
+  background-color: #b91c1c;
+  border: 1px solid #b91c1c;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.product-modal-footer .btn-add-order:hover {
+  background-color: #991b1b;
+  border-color: #991b1b;
+}
+
+.product-modal-footer .btn-add-order.btn-added {
+  background-color: #166534;
+  border-color: #166534;
+}
+
+@media (min-width: 480px) {
+  .product-modal-footer {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+@media (min-width: 600px) {
+  .product-modal-body {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+
+  .product-modal-img-container {
+    inline-size: 220px;
+    block-size: 220px;
+  }
+}
