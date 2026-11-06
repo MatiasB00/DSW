@@ -69,7 +69,7 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
     const handleCambiarEstado = async (idPedido: number, nuevoEstado: string) => {
         try {
             setActualizandoEstadoId(idPedido);
-            const res = await fetch(`/api/pedidos/${idPedido}`, {
+            const res = await fetch(`/api/pedidos/${idPedido}/estado`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado: nuevoEstado }),
@@ -160,11 +160,9 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                         onChange={(e) => setFiltroEstado(e.target.value)}
                     >
                         <option value="todos">Todos los estados</option>
-                        <option value="En preparación">En preparación</option>
-                        <option value="Enviado">Enviado</option>
-                        <option value="Recibido">Recibido</option>
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="Cancelado">Cancelado</option>
+                        <option value="en preparacion">En preparación</option>
+                        <option value="entregado">Entregado</option>
+                        <option value="cancelado">Cancelado</option>
                     </select>
                 </div>
             </div>
@@ -251,26 +249,9 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                                             disabled={estaActualizando}
                                             onChange={(e) => handleCambiarEstado(pedido.IDPedido, e.target.value)}
                                         >
-                                            {pedido.tipo === 'insumo' ? (
-                                                <>
-                                                    <option value="En preparación">En preparación</option>
-                                                    <option value="Enviado">Enviado</option>
-                                                    <option value="Recibido">Recibido</option>
-                                                    {!['En preparación', 'Enviado', 'Recibido'].includes(pedido.estado) && (
-                                                        <option value={pedido.estado}>{pedido.estado}</option>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <option value="Pendiente">Pendiente</option>
-                                                    <option value="En preparación">En preparación</option>
-                                                    <option value="Completado">Completado</option>
-                                                    <option value="Cancelado">Cancelado</option>
-                                                    {!['Pendiente', 'En preparación', 'Completado', 'Cancelado'].includes(pedido.estado) && (
-                                                        <option value={pedido.estado}>{pedido.estado}</option>
-                                                    )}
-                                                </>
-                                            )}
+                                            <option value="en preparacion">En preparación</option>
+                                            <option value="entregado">Entregado</option>
+                                            <option value="cancelado">Cancelado</option>
                                         </select>
                                         {estaActualizando && <span className="admin-updating-text">Guardando...</span>}
                                     </div>

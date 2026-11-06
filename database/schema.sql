@@ -60,13 +60,14 @@ CREATE TABLE IF NOT EXISTS PreciosImpresiones (
 CREATE TABLE IF NOT EXISTS Pedido (
   IDPedido INT UNSIGNED NOT NULL AUTO_INCREMENT,
   fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  estado VARCHAR(30) NOT NULL,
+  estado VARCHAR(30) NOT NULL DEFAULT 'en preparacion',
   total DECIMAL(12, 2) NOT NULL DEFAULT 0,
   IDUsuario INT UNSIGNED NOT NULL,
   PRIMARY KEY (IDPedido),
   KEY idx_pedido_usuario (IDUsuario),
   CONSTRAINT fk_pedido_usuario FOREIGN KEY (IDUsuario) REFERENCES Usuario (IDUsuario) ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT chk_pedido_total CHECK (total >= 0)
+  CONSTRAINT chk_pedido_total CHECK (total >= 0),
+  CONSTRAINT chk_pedido_estado CHECK (estado IN ('en preparacion', 'entregado', 'cancelado'))
 ) ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS PedidoInsumo (
   IDPedido INT UNSIGNED NOT NULL,

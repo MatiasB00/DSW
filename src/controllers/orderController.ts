@@ -19,50 +19,12 @@ export async function create(request: Request, h: ResponseToolkit) {
   return h.response(order).code(201);
 }
 
-export async function update(request: Request, h: ResponseToolkit) {
+export async function updateStatus(request: Request, h: ResponseToolkit) {
+  const { estado } = request.payload as { estado: orders.OrderStatus };
   const updated = await orders.update(
     Number(request.params.id),
-    request.payload as orders.UpdateOrderInput,
+    estado,
   );
   if (!updated) throw Boom.notFound('No se encontró el pedido solicitado.');
-  return h.response(await orders.find(Number(request.params.id))).code(200);
-}
-
-export async function remove(request: Request, h: ResponseToolkit) {
-  const removed = await orders.remove(Number(request.params.id));
-  if (!removed) throw Boom.notFound('No se encontró el pedido solicitado.');
-  return h.response().code(204);
-}
-
-export async function addItem(request: Request, h: ResponseToolkit) {
-  await orders.addItem(
-    Number(request.params.id),
-    request.payload as orders.OrderItemInput,
-  );
-  return h.response(await orders.find(Number(request.params.id))).code(201);
-}
-
-export async function updateItem(request: Request, h: ResponseToolkit) {
-  await orders.updateItem(
-    Number(request.params.id),
-    Number(request.params.productoId),
-    (request.payload as { cantidad: number }).cantidad,
-  );
-  return h.response(await orders.find(Number(request.params.id))).code(200);
-}
-
-export async function removeItem(request: Request, h: ResponseToolkit) {
-  await orders.removeItem(
-    Number(request.params.id),
-    Number(request.params.productoId),
-  );
-  return h.response(await orders.find(Number(request.params.id))).code(200);
-}
-
-export async function updatePrintDetails(request: Request, h: ResponseToolkit) {
-  await orders.updatePrintDetails(
-    Number(request.params.id),
-    request.payload as orders.UpdatePrintOrderInput,
-  );
   return h.response(await orders.find(Number(request.params.id))).code(200);
 }

@@ -41,7 +41,6 @@ export function Carrito() {
                 body: JSON.stringify({
                     IDUsuario: usuario.IDUsuario,
                     tipo: 'insumo',
-                    estado: 'En preparación',
                     items: items.map((item) => ({
                         IDProducto: item.IDProducto,
                         cantidad: item.cantidad,

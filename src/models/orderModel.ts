@@ -18,21 +18,16 @@ export interface PrintOrderInput {
   subtotal: number;
 }
 
-export type UpdatePrintOrderInput = Partial<PrintOrderInput>;
+export const ORDER_STATUSES = ['en preparacion', 'entregado', 'cancelado'] as const;
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+const INITIAL_ORDER_STATUS: OrderStatus = 'en preparacion';
 
 export interface CreateOrderInput {
   IDUsuario: number;
   fecha?: string;
-  estado: string;
   tipo: 'insumo' | 'impresion';
   items?: OrderItemInput[];
   impresion?: PrintOrderInput;
-}
-
-export interface UpdateOrderInput {
-  IDUsuario?: number;
-  fecha?: string;
-  estado?: string;
 }
 
 function toCents(value: string | number): number {
@@ -46,7 +41,7 @@ function toCents(value: string | number): number {
 
 function ensureMoney(cents: number): number {
   if (!Number.isSafeInteger(cents) || cents < 0 || cents > MAX_MONEY_CENTS) {
-    throw Boom.badRequest('El importe supera el máximo permitido por la base de datos.');
+    throw Boom.badRequest('El importe ingresado está fuera de los límites permitidos.');
   }
   return cents;
 }
@@ -82,13 +77,14 @@ async function insertItems(
       connection,
     );
     const products = await rows<RowDataPacket>(
-      `SELECT prec.valor AS precio 
-       FROM Precio prec 
-       WHERE prec.IDProducto = ? 
-       ORDER BY prec.fechaDesde DESC 
-       LIMIT 1 
+      `SELECT prec.valor AS precio
+       FROM Precio prec
+       WHERE prec.IDProducto = ?
+       ORDER BY prec.fechaDesde DESC
+       LIMIT 1
        FOR UPDATE`,
-      [item.IDProducto], connection,
+      [item.IDProducto],
+      connection,
     );
     if (!products[0]) {
       throw Boom.notFound(`No existe precio configurado para el producto ${item.IDProducto}.`);
@@ -171,7 +167,7 @@ export async function create(input: CreateOrderInput): Promise<number> {
       await ensureUser(connection, input.IDUsuario);
       const inserted = (await result(
         'INSERT INTO Pedido (fecha, estado, total, IDUsuario) VALUES (?, ?, 0, ?)',
-        [input.fecha ? new Date(input.fecha) : new Date(), input.estado, input.IDUsuario],
+        [input.fecha ? new Date(input.fecha) : new Date(), INITIAL_ORDER_STATUS, input.IDUsuario],
         connection,
       )) as ResultSetHeader;
       const orderId = inserted.insertId;
@@ -207,204 +203,19 @@ export async function create(input: CreateOrderInput): Promise<number> {
   );
 }
 
-export async function update(id: number, input: UpdateOrderInput): Promise<boolean> {
+export async function update(id: number, estado: OrderStatus): Promise<boolean> {
+  if (!ORDER_STATUSES.includes(estado)) {
+    throw Boom.badRequest('El estado del pedido no es válido.');
+  }
   return databaseOperation(() =>
     transaction(async (connection) => {
       const current = await rows<RowDataPacket>(
-        'SELECT IDPedido, IDUsuario FROM Pedido WHERE IDPedido = ? FOR UPDATE',
+        'SELECT IDPedido FROM Pedido WHERE IDPedido = ? FOR UPDATE',
         [id],
         connection,
       );
       if (!current[0]) return false;
-      if (input.IDUsuario !== undefined) await ensureUser(connection, input.IDUsuario);
-      const assignments: string[] = [];
-      const values: SqlValue[] = [];
-      if (input.IDUsuario !== undefined) {
-        assignments.push('IDUsuario = ?');
-        values.push(input.IDUsuario);
-      }
-      if (input.fecha !== undefined) {
-        assignments.push('fecha = ?');
-        values.push(new Date(input.fecha));
-      }
-      if (input.estado !== undefined) {
-        assignments.push('estado = ?');
-        values.push(input.estado);
-      }
-      if (assignments.length) {
-        await result(`UPDATE Pedido SET ${assignments.join(', ')} WHERE IDPedido = ?`, [
-          ...values,
-          id,
-        ], connection);
-      }
-      return true;
-    }),
-  );
-}
-
-export async function remove(id: number): Promise<boolean> {
-  return databaseOperation(async () => {
-    const deleted = (await result('DELETE FROM Pedido WHERE IDPedido = ?', [id])) as ResultSetHeader;
-    return deleted.affectedRows > 0;
-  });
-}
-
-export async function addItem(
-  orderId: number,
-  item: OrderItemInput,
-): Promise<boolean> {
-  return databaseOperation(() =>
-    transaction(async (connection) => {
-      const order = await rows<RowDataPacket>(
-        `SELECT p.IDPedido, pin.IDPedido AS insumo
-         FROM Pedido p JOIN PedidoInsumo pin ON pin.IDPedido = p.IDPedido
-         WHERE p.IDPedido = ? FOR UPDATE`,
-        [orderId],
-        connection,
-      );
-      if (!order[0]) throw Boom.notFound('No existe un pedido de insumos con ese ID.');
-      const total = await insertItems(connection, orderId, [item]);
-      const current = await rows<RowDataPacket>(
-        'SELECT total FROM Pedido WHERE IDPedido = ?',
-        [orderId],
-        connection,
-      );
-      const updatedCents = ensureMoney(toCents(current[0].total as string) + total);
-      await result('UPDATE Pedido SET total = ? WHERE IDPedido = ?', [
-        fromCents(updatedCents),
-        orderId,
-      ], connection);
-      return true;
-    }),
-  );
-}
-
-export async function updateItem(
-  orderId: number,
-  productId: number,
-  quantity: number,
-): Promise<boolean> {
-  return databaseOperation(() =>
-    transaction(async (connection) => {
-      const order = await rows<RowDataPacket>(
-        `SELECT p.total FROM Pedido p JOIN PedidoInsumo pin ON pin.IDPedido = p.IDPedido
-         WHERE p.IDPedido = ? FOR UPDATE`,
-        [orderId],
-        connection,
-      );
-      if (!order[0]) throw Boom.notFound('No existe un pedido de insumos con ese ID.');
-      const lines = await rows<RowDataPacket>(
-        `SELECT pp.subtotal, ROUND(pp.subtotal / pp.cantidad, 2) AS precio 
-         FROM ProdPed pp
-         WHERE pp.IDPedido = ? AND pp.IDProducto = ? FOR UPDATE`,
-        [orderId, productId],
-        connection,
-      );
-      if (!lines[0]) throw Boom.notFound('El producto no está incluido en este pedido.');
-      const newLineCents = ensureMoney(toCents(lines[0].precio as string) * quantity);
-      const newTotalCents = ensureMoney(
-        toCents(order[0].total as string) -
-        toCents(lines[0].subtotal as string) +
-        newLineCents,
-      );
-      await result(
-        'UPDATE ProdPed SET cantidad = ?, subtotal = ? WHERE IDPedido = ? AND IDProducto = ?',
-        [quantity, fromCents(newLineCents), orderId, productId],
-        connection,
-      );
-      await result('UPDATE Pedido SET total = ? WHERE IDPedido = ?', [
-        fromCents(newTotalCents),
-        orderId,
-      ], connection);
-      return true;
-    }),
-  );
-}
-
-export async function removeItem(orderId: number, productId: number): Promise<boolean> {
-  return databaseOperation(() =>
-    transaction(async (connection) => {
-      const order = await rows<RowDataPacket>(
-        `SELECT p.total FROM Pedido p JOIN PedidoInsumo pin ON pin.IDPedido = p.IDPedido
-         WHERE p.IDPedido = ? FOR UPDATE`,
-        [orderId],
-        connection,
-      );
-      if (!order[0]) throw Boom.notFound('No existe un pedido de insumos con ese ID.');
-      const lines = await rows<RowDataPacket>(
-        'SELECT subtotal FROM ProdPed WHERE IDPedido = ? AND IDProducto = ? FOR UPDATE',
-        [orderId, productId],
-        connection,
-      );
-      if (!lines[0]) throw Boom.notFound('El producto no está incluido en este pedido.');
-      const remaining = await rows<RowDataPacket>(
-        'SELECT COUNT(*) AS cantidad FROM ProdPed WHERE IDPedido = ?',
-        [orderId],
-        connection,
-      );
-      if (Number(remaining[0].cantidad) <= 1) {
-        throw Boom.conflict('Un pedido de insumos debe contener al menos un producto.');
-      }
-      await result('DELETE FROM ProdPed WHERE IDPedido = ? AND IDProducto = ?', [
-        orderId,
-        productId,
-      ], connection);
-      await result('UPDATE Pedido SET total = ? WHERE IDPedido = ?', [
-        fromCents(
-          ensureMoney(
-            toCents(order[0].total as string) - toCents(lines[0].subtotal as string),
-          ),
-        ),
-        orderId,
-      ], connection);
-      return true;
-    }),
-  );
-}
-
-export async function updatePrintDetails(
-  orderId: number,
-  input: UpdatePrintOrderInput,
-): Promise<boolean> {
-  return databaseOperation(() =>
-    transaction(async (connection) => {
-      const current = await rows<RowDataPacket>(
-        `SELECT pi.IDPedido FROM PedidoImpresion pi
-         WHERE pi.IDPedido = ? FOR UPDATE`,
-        [orderId],
-        connection,
-      );
-      if (!current[0]) throw Boom.notFound('No existe un pedido de impresión con ese ID.');
-
-      const fields: Array<keyof PrintOrderInput> = [
-        'cantCopias',
-        'faz',
-        'tamanio',
-        'archivo',
-        'observacion',
-        'subtotal',
-      ];
-      const assignments: string[] = [];
-      const values: SqlValue[] = [];
-      for (const field of fields) {
-        const value = input[field];
-        if (value === undefined) continue;
-        assignments.push(`${field} = ?`);
-        values.push(field === 'subtotal' ? fromCents(toCents(value as number)) : value);
-      }
-      if (assignments.length) {
-        await result(
-          `UPDATE PedidoImpresion SET ${assignments.join(', ')} WHERE IDPedido = ?`,
-          [...values, orderId],
-          connection,
-        );
-      }
-      if (input.subtotal !== undefined) {
-        await result('UPDATE Pedido SET total = ? WHERE IDPedido = ?', [
-          fromCents(toCents(input.subtotal)),
-          orderId,
-        ], connection);
-      }
+      await result('UPDATE Pedido SET estado = ? WHERE IDPedido = ?', [estado, id], connection);
       return true;
     }),
   );

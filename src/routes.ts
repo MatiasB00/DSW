@@ -7,14 +7,10 @@ import * as userController from './controllers/userController';
 import * as productController from './controllers/productController';
 import * as providerController from './controllers/providerController';
 import * as categoryController from './controllers/categoryController';
+import { ORDER_STATUSES } from './models/orderModel';
 
 const idParams = Joi.object({
   id: Joi.number().integer().positive().max(4294967295).required(),
-});
-
-const itemParams = Joi.object({
-  id: Joi.number().integer().positive().max(4294967295).required(),
-  productoId: Joi.number().integer().positive().max(4294967295).required(),
 });
 
 const usuarioSchema = Joi.object({
@@ -61,8 +57,7 @@ const precioSchema = Joi.object({
 
 const orderFields = {
   IDUsuario: Joi.number().integer().positive().max(4294967295).required(),
-  fecha: Joi.string().isoDate().optional(),
-  estado: Joi.string().trim().min(1).max(30).required(),
+  fecha: Joi.string().isoDate().optional()
 };
 
 const itemSchema = Joi.object({
@@ -94,24 +89,9 @@ const orderSchema = Joi.alternatives().try(
   }),
 );
 
-const updateOrderSchema = Joi.object({
-  IDUsuario: Joi.number().integer().positive().max(4294967295),
-  fecha: Joi.string().isoDate(),
-  estado: Joi.string().trim().min(1).max(30),
-}).min(1);
-
-const quantitySchema = Joi.object({
-  cantidad: Joi.number().integer().positive().max(4294967295).required(),
-});
-
-const updatePrintSchema = Joi.object({
-  cantCopias: Joi.number().integer().positive().max(4294967295),
-  faz: Joi.string().trim().min(1).max(30),
-  tamanio: Joi.string().trim().min(1).max(50),
-  archivo: Joi.string().trim().min(1).max(2048),
-  observacion: Joi.string().allow('', null),
-  subtotal: Joi.number().precision(2).min(0).max(9999999999.99),
-}).min(1);
+const updateOrderStatusSchema = Joi.object({
+  estado: Joi.string().valid(...ORDER_STATUSES).required(),
+}).unknown(false);
 
 const categoriaSchema = Joi.object({
   nombre: Joi.string().trim().min(1).max(30).required(),
@@ -294,38 +274,8 @@ export const routes: ServerRoute[] = [
   },
   {
     method: 'PATCH',
-    path: '/api/pedidos/{id}',
-    options: { validate: { params: idParams, payload: updateOrderSchema } },
-    handler: orderController.update,
-  },
-  {
-    method: 'DELETE',
-    path: '/api/pedidos/{id}',
-    options: { validate: { params: idParams } },
-    handler: orderController.remove,
-  },
-  {
-    method: 'PATCH',
-    path: '/api/pedidos/{id}/impresion',
-    options: { validate: { params: idParams, payload: updatePrintSchema } },
-    handler: orderController.updatePrintDetails,
-  },
-  {
-    method: 'POST',
-    path: '/api/pedidos/{id}/items',
-    options: { validate: { params: idParams, payload: itemSchema } },
-    handler: orderController.addItem,
-  },
-  {
-    method: 'PATCH',
-    path: '/api/pedidos/{id}/items/{productoId}',
-    options: { validate: { params: itemParams, payload: quantitySchema } },
-    handler: orderController.updateItem,
-  },
-  {
-    method: 'DELETE',
-    path: '/api/pedidos/{id}/items/{productoId}',
-    options: { validate: { params: itemParams } },
-    handler: orderController.removeItem,
+    path: '/api/pedidos/{id}/estado',
+    options: { validate: { params: idParams, payload: updateOrderStatusSchema } },
+    handler: orderController.updateStatus,
   },
 ];
