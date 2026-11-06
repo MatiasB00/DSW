@@ -186,8 +186,8 @@ export function PedidoImpresion() {
 
                 {cantidadHojas !== null && cantCopias !== null && (
                     <p className="print-order-pages" role="status">
-                        El PDF tiene {cantidadHojas} hojas; se cobrarán {cantCopias} copias
-                        {faz === 'doble' ? ' (doble faz, redondeado hacia arriba)' : ''}.
+                        El PDF tiene {cantidadHojas} paginas; se cobrarán {cantCopias} copias
+                        {faz === 'doble' ? ' (Doble faz)' : ' (Simple Faz)'}.
                     </p>
                 )}
 
@@ -230,9 +230,6 @@ export function PedidoImpresion() {
                 >
                     {enviando ? 'Enviando pedido...' : 'Crear pedido de impresión'}
                 </button>
-                <p className="print-order-price-note">
-                    El subtotal final se calcula en el servidor con el precio vigente al confirmar el pedido.
-                </p>
             </form>
         </main>
     );

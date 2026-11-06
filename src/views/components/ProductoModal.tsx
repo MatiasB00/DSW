@@ -10,9 +10,9 @@ interface ProductoModalProps {
 }
 
 export function ProductoModal({ producto, onClose, onAgregar, agregadoId }: ProductoModalProps) {
-    if (!producto) return null;
-
     useEffect(() => {
+        if (!producto) return;
+
         document.body.classList.add('modal-open');
 
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -24,7 +24,9 @@ export function ProductoModal({ producto, onClose, onAgregar, agregadoId }: Prod
             document.body.classList.remove('modal-open');
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [onClose]);
+    }, [producto, onClose]);
+
+    if (!producto) return null;
 
     const estaAgregado = agregadoId === producto.IDProducto;
 

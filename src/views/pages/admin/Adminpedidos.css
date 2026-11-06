@@ -176,27 +176,12 @@
   transition: all 0.2s ease;
 }
 
-.admin-status-select.status-pendiente {
-  background-color: #fef3c7;
-  color: #b45309;
-  border-color: #fde68a;
-}
-
-.admin-status-select.status-en_preparacion,
-.admin-status-select.status-en_proceso {
+.admin-status-select.status-en_preparacion {
   background-color: #dbeafe;
   color: #1d4ed8;
   border-color: #bfdbfe;
 }
 
-.admin-status-select.status-enviado {
-  background-color: #e0e7ff;
-  color: #4338ca;
-  border-color: #c7d2fe;
-}
-
-.admin-status-select.status-recibido,
-.admin-status-select.status-completado,
 .admin-status-select.status-entregado {
   background-color: #dcfce7;
   color: #15803d;
