@@ -78,13 +78,15 @@ CREATE TABLE IF NOT EXISTS PedidoInsumo (
 CREATE TABLE IF NOT EXISTS PedidoImpresion (
   IDPedido INT UNSIGNED NOT NULL,
   cantCopias INT UNSIGNED NOT NULL,
-  faz VARCHAR(30) NOT NULL,
-  tamanio VARCHAR(50) NOT NULL,
-  archivo VARCHAR(2048) NULL,
+  faz ENUM('simple', 'doble') NOT NULL,
+  tamanio VARCHAR(30) NOT NULL,
+  tipoColor ENUM('blanco y negro', 'color') NOT NULL,
+  fechaPrecioDesde DATETIME NOT NULL,
   observacion TEXT NULL,
   subtotal DECIMAL(12, 2) NOT NULL,
   PRIMARY KEY (IDPedido),
   CONSTRAINT fk_pedidoimpresion_pedido FOREIGN KEY (IDPedido) REFERENCES Pedido (IDPedido) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_pedidoimpresion_precio FOREIGN KEY (tamanio, fechaPrecioDesde) REFERENCES PreciosImpresiones (tamanio, fechaDesde) ON UPDATE RESTRICT ON DELETE RESTRICT,
   CONSTRAINT chk_pedidoimpresion_tamanio CHECK (tamanio IN ('A1', 'A2', 'A3', 'A4', 'A5', 'A6')),
   CONSTRAINT chk_impresion_copias CHECK (cantCopias > 0),
   CONSTRAINT chk_impresion_subtotal CHECK (subtotal >= 0)

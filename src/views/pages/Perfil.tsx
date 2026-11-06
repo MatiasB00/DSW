@@ -20,6 +20,18 @@ interface PedidoCliente {
     items?: PedidoItemDetalle[];
 }
 
+interface PedidoDetalle {
+    tipo: 'insumo' | 'impresion';
+    items?: PedidoItemDetalle[];
+    cantCopias?: number;
+    faz?: string;
+    tamanio?: string;
+    tipoColor?: string;
+    fechaPrecioDesde?: string;
+    impresionSubtotal?: number | string;
+    observacion?: string | null;
+}
+
 export function Perfil() {
     const location = useLocation();
     const nuevoPedidoId = location.state?.nuevoPedidoId;
@@ -32,7 +44,7 @@ export function Perfil() {
     const [error, setError] = useState<string | null>(null);
 
     const [pedidoAbiertoId, setPedidoAbiertoId] = useState<number | null>(null);
-    const [detallesCargados, setDetallesCargados] = useState<Record<number, PedidoItemDetalle[]>>({});
+    const [detallesCargados, setDetallesCargados] = useState<Record<number, PedidoDetalle>>({});
     const [cargandoDetalleId, setCargandoDetalleId] = useState<number | null>(null);
     const [alertaPedido, setAlertaPedido] = useState<number | null>(nuevoPedidoId || null);
 
@@ -80,7 +92,7 @@ export function Perfil() {
                 const data = await res.json();
                 setDetallesCargados((prev) => ({
                     ...prev,
-                    [idPedido]: data.items || [],
+                    [idPedido]: data,
                 }));
             }
         } catch (err) {
@@ -154,7 +166,8 @@ export function Perfil() {
                     <div className="perfil-orders-list">
                         {pedidos.map((pedido) => {
                             const estaAbierto = pedidoAbiertoId === pedido.IDPedido;
-                            const itemsDetalle = detallesCargados[pedido.IDPedido];
+                            const detallePedido = detallesCargados[pedido.IDPedido];
+                            const itemsDetalle = detallePedido?.items;
                             const estaCargandoItems = cargandoDetalleId === pedido.IDPedido;
 
                             return (
@@ -203,6 +216,23 @@ export function Perfil() {
                                         <div className="perfil-order-expanded">
                                             {estaCargandoItems ? (
                                                 <p className="loading-items-text">Cargando productos del pedido...</p>
+                                            ) : detallePedido?.tipo === 'impresion' ? (
+                                                <div className="perfil-print-details">
+                                                    <p><strong>Tamaño:</strong> {detallePedido.tamanio}</p>
+                                                    <p><strong>Impresión:</strong> {detallePedido.tipoColor}</p>
+                                                    <p><strong>Faz:</strong> {detallePedido.faz}</p>
+                                                    <p><strong>Copias:</strong> {detallePedido.cantCopias}</p>
+                                                    <p>
+                                                        <strong>Subtotal:</strong>{' '}
+                                                        ${Number(detallePedido.impresionSubtotal).toLocaleString('es-AR', {
+                                                            minimumFractionDigits: 2,
+                                                            maximumFractionDigits: 2,
+                                                        })}
+                                                    </p>
+                                                    {detallePedido.observacion && (
+                                                        <p><strong>Observación:</strong> {detallePedido.observacion}</p>
+                                                    )}
+                                                </div>
                                             ) : itemsDetalle && itemsDetalle.length > 0 ? (
                                                 <div className="order-items-table-wrapper">
                                                     <table className="order-items-table">

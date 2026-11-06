@@ -11,11 +11,10 @@ export interface OrderItemInput {
 
 export interface PrintOrderInput {
   cantCopias: number;
-  faz: string;
+  faz: 'simple' | 'doble';
   tamanio: string;
-  archivo: string;
+  tipoColor: 'blanco y negro' | 'color';
   observacion?: string | null;
-  subtotal: number;
 }
 
 export const ORDER_STATUSES = ['en preparacion', 'entregado', 'cancelado'] as const;
@@ -48,6 +47,22 @@ function ensureMoney(cents: number): number {
 
 function fromCents(cents: number): string {
   return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, '0')}`;
+}
+
+function printSubtotalCents(copies: number, price: RowDataPacket, tipoColor: 'blanco y negro' | 'color'): number {
+  const sizePriceCents = toCents(price.precioTamanio as string);
+  const copyPriceCents = toCents(
+    (tipoColor === 'color' ? price.precioColor : price.precioByN) as string,
+  );
+  const factorHundredths = toCents(price.factorGanancia as string);
+  const subtotalCents =
+    (BigInt(copies) * BigInt(sizePriceCents + copyPriceCents) * BigInt(factorHundredths) + 50n) /
+    100n;
+
+  if (subtotalCents > BigInt(MAX_MONEY_CENTS)) {
+    throw Boom.badRequest('El subtotal del pedido supera el máximo permitido.');
+  }
+  return Number(subtotalCents);
 }
 
 async function insertItems(
@@ -136,7 +151,8 @@ export async function findOne(id: number): Promise<RowDataPacket | undefined> {
       `SELECT p.*, u.nombre AS usuarioNombre,
         CASE WHEN pi.IDPedido IS NOT NULL THEN 'impresion'
              WHEN pin.IDPedido IS NOT NULL THEN 'insumo' END AS tipo,
-        pi.cantCopias, pi.faz, pi.tamanio, pi.archivo, pi.observacion,
+        pi.cantCopias, pi.faz, pi.tamanio, pi.tipoColor, pi.fechaPrecioDesde,
+        pi.observacion,
         pi.subtotal AS impresionSubtotal
        FROM Pedido p
        JOIN Usuario u ON u.IDUsuario = p.IDUsuario
@@ -177,19 +193,37 @@ export async function create(input: CreateOrderInput): Promise<number> {
         totalCents = await insertItems(connection, orderId, input.items ?? []);
       } else {
         const print = input.impresion!;
-        totalCents = toCents(print.subtotal);
+        const prices = await rows<RowDataPacket>(
+          `SELECT DATE_FORMAT(fechaDesde, '%Y-%m-%d %H:%i:%s') AS fechaPrecioDesde,
+                  precioTamanio, precioByN, precioColor, factorGanancia
+           FROM PreciosImpresiones
+           WHERE tamanio = ?
+           ORDER BY fechaDesde DESC
+           LIMIT 1
+           FOR UPDATE`,
+          [print.tamanio],
+          connection,
+        );
+        if (!prices[0]) {
+          throw Boom.badRequest(`No hay precios configurados para el tamaño ${print.tamanio}.`);
+        }
+        const price = prices[0];
+        totalCents = printSubtotalCents(print.cantCopias, price, print.tipoColor);
+        const subtotal = fromCents(totalCents);
         await result(
           `INSERT INTO PedidoImpresion
-            (IDPedido, cantCopias, faz, tamanio, archivo, observacion, subtotal)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            (IDPedido, cantCopias, faz, tamanio, tipoColor, fechaPrecioDesde,
+             observacion, subtotal)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             orderId,
             print.cantCopias,
             print.faz,
             print.tamanio,
-            print.archivo,
+            print.tipoColor,
+            price.fechaPrecioDesde as string,
             print.observacion ?? null,
-            fromCents(totalCents),
+            subtotal,
           ],
           connection,
         );

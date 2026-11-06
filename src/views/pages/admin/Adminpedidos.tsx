@@ -24,7 +24,8 @@ interface PedidoAdmin {
     cantCopias?: number;
     faz?: string;
     tamanio?: string;
-    archivo?: string | null;
+    tipoColor?: string;
+    fechaPrecioDesde?: string;
     observacion?: string | null;
     impresionSubtotal?: number | string;
 }
@@ -311,15 +312,16 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                                                             <span><strong>Copias:</strong> {detalle.cantCopias}</span>
                                                             <span><strong>Faz:</strong> {detalle.faz}</span>
                                                             <span><strong>Tamaño:</strong> {detalle.tamanio}</span>
+                                                            <span><strong>Impresión:</strong> {detalle.tipoColor}</span>
                                                         </div>
+                                                        {detalle.fechaPrecioDesde && (
+                                                            <div className="admin-print-obs">
+                                                                <strong>Precio aplicado desde:</strong> {detalle.fechaPrecioDesde}
+                                                            </div>
+                                                        )}
                                                         {detalle.observacion && (
                                                             <div className="admin-print-obs">
                                                                 <strong>Observaciones:</strong> {detalle.observacion}
-                                                            </div>
-                                                        )}
-                                                        {detalle.archivo && (
-                                                            <div className="admin-print-file">
-                                                                <strong>Archivo:</strong> {detalle.archivo}
                                                             </div>
                                                         )}
                                                     </div>

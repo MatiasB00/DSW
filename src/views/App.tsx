@@ -11,6 +11,8 @@ import { Perfil } from './pages/Perfil';
 import { Productos } from './pages/Productos';
 import { Carrito } from './pages/Carrito';
 import { RequireAdmin } from './components/RequireAdmin';
+import { RequireAuth } from './components/RequireAuth';
+import { PedidoImpresion } from './pages/PedidoImpresion';
 
 export function App() {
   return (
@@ -24,6 +26,7 @@ export function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/admin" element={<RequireAdmin><Adminpanel /></RequireAdmin>} />
+          <Route path="/pedido-impresion" element={<RequireAuth><PedidoImpresion /></RequireAuth>} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/carrito" element={<Carrito />} />
         </Routes>

@@ -98,29 +98,12 @@ const itemSchema = Joi.object({
   cantidad: Joi.number().integer().positive().max(4294967295).required(),
 });
 
-const printDetailsSchema = Joi.object({
-  cantCopias: Joi.number().integer().positive().max(4294967295).required(),
-  faz: Joi.string().trim().min(1).max(30).required(),
-  tamanio: Joi.string().trim().valid(...PRINTING_SIZES).required(),
-  archivo: Joi.string().trim().min(1).max(2048).required(),
-  observacion: Joi.string().allow('', null).optional(),
-  subtotal: Joi.number().precision(2).min(0).max(9999999999.99).required(),
-});
-
-const orderSchema = Joi.alternatives().try(
-  Joi.object({
-    ...orderFields,
-    tipo: Joi.string().valid('insumo').required(),
-    items: Joi.array().items(itemSchema).min(1).required(),
-    impresion: Joi.forbidden(),
-  }).unknown(false),
-  Joi.object({
-    ...orderFields,
-    tipo: Joi.string().valid('impresion').required(),
-    impresion: printDetailsSchema.required(),
-    items: Joi.forbidden(),
-  }).unknown(false),
-);
+const orderSchema = Joi.object({
+  ...orderFields,
+  tipo: Joi.string().valid('insumo').required(),
+  items: Joi.array().items(itemSchema).min(1).required(),
+  impresion: Joi.forbidden(),
+}).unknown(false);
 
 const updateOrderStatusSchema = Joi.object({
   estado: Joi.string().valid(...ORDER_STATUSES).required(),
@@ -336,6 +319,18 @@ export const routes: ServerRoute[] = [
     path: '/api/pedidos',
     options: { auth: { strategy: 'jwt' }, validate: { payload: orderSchema } },
     handler: orderController.create,
+  },
+  {
+    method: 'POST',
+    path: '/api/pedidos/impresion',
+    options: {
+      auth: { strategy: 'jwt' },
+      payload: {
+        maxBytes: 20 * 1024 * 1024 + 64 * 1024,
+        multipart: { output: 'stream' },
+      },
+    },
+    handler: orderController.createPrint,
   },
   {
     method: 'PATCH',

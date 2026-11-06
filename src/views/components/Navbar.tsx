@@ -98,6 +98,9 @@ export function Navbar() {
                     <Link to="/productos" className="nav-link" onClick={cerrarMenu}>
                         Productos
                     </Link>
+                    <Link to="/pedido-impresion" className="nav-link" onClick={cerrarMenu}>
+                        Pedido de impresión
+                    </Link>
                     <Link to="/nosotros" className="nav-link" onClick={cerrarMenu}>
                         Nosotros
                     </Link>

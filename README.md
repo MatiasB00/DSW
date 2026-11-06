@@ -28,8 +28,13 @@ Todos los endpoints están bajo `/api`.
 | `/precios-impresiones/{tamanio}/{fechaDesde}` | PUT requiere rol `admin`; `fechaDesde` identifica el registro y no se modifica. No existe DELETE |
 | Tamaños de impresión | Solo se permiten `A1`, `A2`, `A3`, `A4`, `A5` y `A6` en precios y pedidos |
 | `/pedidos` | GET pedidos propios para clientes o todos para admins; POST requiere sesión |
+| `/pedidos/impresion` | POST multipart, requiere sesión; acepta PDF de hasta 20 MB |
 | `/pedidos/{id}` | GET solo para el dueño del pedido o un admin |
 | `/pedidos/{id}/estado` | PATCH de estado, solo para admins |
+
+El PDF se valida durante la solicitud y no se conserva en disco ni en la base de datos. La cantidad de copias se estima en el navegador leyendo las páginas del PDF con PDF.js; para doble faz se divide por dos y se redondea hacia arriba. Después de registrar el pedido el administrador no podrá descargar el archivo. El importe se vuelve a calcular en el servidor con el precio más reciente para el tamaño elegido.
+
+Si ya existe la base de datos, será necesario actualizarla para incorporar los nuevos campos y restricciones definidos en `database/schema.sql`.
 
 Las solicitudes protegidas deben incluir `Authorization: Bearer <token>`. Los tokens vencen a las 8 horas. Una solicitud sin token válido recibe `401`; un usuario autenticado sin permisos recibe `403`. El ID del cliente al crear un pedido se obtiene de la sesión, no del cuerpo enviado por el navegador. Los pedidos no se pueden borrar ni editar; solo un admin puede cambiar su estado.
 
@@ -42,21 +47,7 @@ Ejemplo de pedido de insumos:
 }
 ```
 
-Ejemplo de pedido de impresión:
-
-```json
-{
-  "tipo": "impresion",
-  "impresion": {
-    "cantCopias": 100,
-    "faz": "doble",
-    "tamanio": "A4",
-    "archivo": "https://ejemplo.test/documento.pdf",
-    "observacion": "",
-    "subtotal": 2500
-  }
-}
-```
+Los pedidos de impresión se envían como `multipart/form-data` a `/api/pedidos/impresion`, incluyendo `archivo` (PDF), `tamanio`, `tipoColor`, `faz` y `cantCopias`; `observacion` es opcional. El subtotal lo calcula el servidor y no se acepta del cliente.
 
 La base de datos mantiene las claves foráneas y restricciones locales; la regla de especialización total y disjunta (exactamente un subtipo por pedido) se asegura en la creación transaccional de la API, ya que MySQL no admite restricciones diferibles entre tablas.
 

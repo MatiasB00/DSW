@@ -1,0 +1,121 @@
+.print-order-container {
+    box-sizing: border-box;
+    margin-inline: auto;
+    max-inline-size: 760px;
+    min-block-size: calc(100dvh - 72px);
+    padding: 2rem 1rem 3rem;
+}
+
+.print-order-header {
+    margin-block-end: 1.5rem;
+}
+
+.print-order-header h1 {
+    color: #2b211b;
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.print-order-header p,
+.print-order-price-note {
+    color: #736257;
+    font-size: 0.9rem;
+}
+
+.print-order-form {
+    background: #fffdfa;
+    border: 1px solid #ebdcd0;
+    border-radius: 8px;
+    display: grid;
+    gap: 1.1rem;
+    padding: 1.5rem;
+}
+
+.print-order-form > label,
+.print-order-form fieldset label {
+    color: #55453b;
+    display: grid;
+    font-size: 0.9rem;
+    font-weight: 700;
+    gap: 0.45rem;
+}
+
+.print-order-form input,
+.print-order-form select,
+.print-order-form textarea {
+    background: #fff;
+    border: 1px solid #d8c8bc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    color: #2b211b;
+    font: inherit;
+    inline-size: 100%;
+    padding: 0.7rem 0.8rem;
+}
+
+.print-order-form fieldset {
+    border: 1px solid #ebdcd0;
+    border-radius: 6px;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    padding: 1rem;
+}
+
+.print-order-form legend {
+    color: #55453b;
+    font-weight: 700;
+    padding-inline: 0.4rem;
+}
+
+.print-order-pages {
+    background: #f5efe8;
+    border-radius: 6px;
+    color: #55453b;
+    margin: 0;
+    padding: 0.75rem;
+}
+
+.print-order-summary {
+    align-items: center;
+    border-top: 1px solid #ebdcd0;
+    color: #55453b;
+    display: flex;
+    justify-content: space-between;
+    padding-block-start: 1rem;
+}
+
+.print-order-summary strong {
+    color: #2b211b;
+    font-size: 1.2rem;
+}
+
+.print-order-submit {
+    background: #b91c1c;
+    border: 0;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.85rem 1rem;
+}
+
+.print-order-submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.print-order-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    color: #991b1b;
+    margin-block-end: 1rem;
+    padding: 0.8rem 1rem;
+}
+
+.print-order-price-note {
+    margin: 0;
+    text-align: center;
+}
