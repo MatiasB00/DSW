@@ -114,14 +114,14 @@ export const routes: ServerRoute[] = [
   {
     method: 'GET',
     path: '/api/proveedores',
-    handler: providerController.list()
+    handler: providerController.findAll()
   },
 
   {
     method: 'GET',
     path: '/api/proveedores/{id}',
     options: { validate: { params: idParams } },
-    handler: providerController.get()
+    handler: providerController.findOne()
   },
 
   {
@@ -148,14 +148,14 @@ export const routes: ServerRoute[] = [
   {
     method: 'GET',
     path: '/api/usuarios',
-    handler: userController.list()
+    handler: userController.findAll()
   },
 
   {
     method: 'GET',
     path: '/api/usuarios/{id}',
     options: { validate: { params: idParams } },
-    handler: userController.get()
+    handler: userController.findOne()
   },
 
   {
@@ -182,14 +182,14 @@ export const routes: ServerRoute[] = [
   {
     method: 'GET',
     path: '/api/productos',
-    handler: productController.list()
+    handler: productController.findAll()
   },
 
   {
     method: 'GET',
     path: '/api/productos/{id}',
     options: { validate: { params: idParams } },
-    handler: productController.get()
+    handler: productController.findOne()
   },
 
   {
@@ -216,13 +216,13 @@ export const routes: ServerRoute[] = [
   {
     method: 'GET',
     path: '/api/pedidos',
-    handler: orderController.list
+    handler: orderController.findAll
   },
   {
     method: 'GET',
     path: '/api/productos/{id}/precios',
     options: { validate: { params: idParams } },
-    handler: priceController.getHistorial,
+    handler: priceController.findAll,
   },
   {
     method: 'POST',
@@ -233,13 +233,13 @@ export const routes: ServerRoute[] = [
   {
     method: 'GET',
     path: '/api/categorias',
-    handler: categoryController.list()
+    handler: categoryController.findAll()
   },
   {
     method: 'GET',
     path: '/api/categorias/{id}',
     options: { validate: { params: idParams } },
-    handler: categoryController.get()
+    handler: categoryController.findOne()
   },
   {
     method: 'POST',
@@ -264,7 +264,7 @@ export const routes: ServerRoute[] = [
     method: 'GET',
     path: '/api/pedidos/{id}',
     options: { validate: { params: idParams } },
-    handler: orderController.get,
+    handler: orderController.findOne,
   },
   {
     method: 'POST',
@@ -276,6 +276,6 @@ export const routes: ServerRoute[] = [
     method: 'PATCH',
     path: '/api/pedidos/{id}/estado',
     options: { validate: { params: idParams, payload: updateOrderStatusSchema } },
-    handler: orderController.updateStatus,
+    handler: orderController.update,
   },
 ];

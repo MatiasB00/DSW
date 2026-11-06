@@ -11,12 +11,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dsw_imprenta_2026';
 export async function register(request: Request, h: ResponseToolkit) {
     const payload = request.payload as authModel.UsuarioRegistroInput;
 
-    const usuarioExistente = await authModel.buscarPorEmail(payload.email);
+    const usuarioExistente = await authModel.findByEmail(payload.email);
     if (usuarioExistente) {
         throw Boom.conflict('El email ya está registrado');
     };
 
-    const nuevoUsuario = await authModel.registrarUsuario(payload);
+    const nuevoUsuario = await authModel.create(payload);
 
     const token = jwt.sign(
         {
@@ -44,7 +44,7 @@ export async function login(request: Request, h: ResponseToolkit) {
         contrasenia: string
     }
 
-    const usuario = await authModel.buscarPorEmail(email);
+    const usuario = await authModel.findByEmail(email);
     if (!usuario) {
         throw Boom.unauthorized('Credenciales inválidas');
     }

@@ -111,7 +111,7 @@ async function ensureUser(connection: PoolConnection, userId: number): Promise<v
   if (!users[0]) throw Boom.notFound(`No existe el usuario ${userId}.`);
 }
 
-export async function list(userId?: number): Promise<RowDataPacket[]> {
+export async function findAll(userId?: number): Promise<RowDataPacket[]> {
   const whereClause = userId ? 'WHERE p.IDUsuario = ?' : '';
   const params: SqlValue[] = userId ? [userId] : [];
   return databaseOperation(() =>
@@ -130,7 +130,7 @@ export async function list(userId?: number): Promise<RowDataPacket[]> {
   );
 }
 
-export async function find(id: number): Promise<RowDataPacket | undefined> {
+export async function findOne(id: number): Promise<RowDataPacket | undefined> {
   const found = await databaseOperation(() =>
     rows<RowDataPacket>(
       `SELECT p.*, u.nombre AS usuarioNombre,

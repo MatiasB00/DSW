@@ -7,7 +7,7 @@ export interface PrecioItem {
     valor: number;
 }
 
-export async function getHistorial(idProducto: number): Promise<RowDataPacket[]> {
+export async function findAll(idProducto: number): Promise<RowDataPacket[]> {
     return databaseOperation(() =>
         rows(
             `SELECT IDProducto, fechaDesde, valor 
@@ -19,7 +19,7 @@ export async function getHistorial(idProducto: number): Promise<RowDataPacket[]>
     );
 }
 
-export async function registrarNuevoPrecio(idProducto: number, valor: number): Promise<void> {
+export async function create(idProducto: number, valor: number): Promise<void> {
     return databaseOperation(async () => {
         await result(
             `INSERT INTO Precio (IDProducto, fechaDesde, valor) VALUES (?, NOW(), ?)`,

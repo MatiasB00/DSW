@@ -2,12 +2,12 @@ import Boom from '@hapi/boom';
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import * as product from '../models/productModel';
 
-export function list() {
+export function findAll() {
   return async (_request: Request, h: ResponseToolkit) =>
     h.response(await product.findAll()).code(200);
 }
 
-export function get() {
+export function findOne() {
   return async (request: Request, h: ResponseToolkit) => {
     const record = await product.findOne(Number(request.params.id));
     if (!record) throw Boom.notFound('No se encontró el producto solicitado.');

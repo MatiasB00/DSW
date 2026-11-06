@@ -21,7 +21,7 @@ export interface UsuarioRegistroInput {
     rol?: string;
 }
 
-export async function buscarPorEmail(email: string): Promise<UsuarioRow | null> {
+export async function findByEmail(email: string): Promise<UsuarioRow | null> {
     return databaseOperation(async () => {
         const listado = await rows<UsuarioRow>(
             'SELECT IDUsuario, nombre, apellido, email, contrasenia, rol  FROM Usuario WHERE email = ?',
@@ -31,7 +31,7 @@ export async function buscarPorEmail(email: string): Promise<UsuarioRow | null> 
     })
 }
 
-export async function registrarUsuario(datos: UsuarioRegistroInput) {
+export async function create(datos: UsuarioRegistroInput) {
     return databaseOperation(async () => {
         const contraseniaHash = await bycript.hash(datos.contrasenia, 10);
 

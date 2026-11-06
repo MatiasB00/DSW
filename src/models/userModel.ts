@@ -61,7 +61,7 @@ export async function update(id: number, user: userInput): Promise<boolean> {
   })
 }
 
-export async function remove(id: number): Promise <boolean> {
+export async function remove(id: number): Promise<boolean> {
   return databaseOperation(async () => {
     const deleted = await result(
       'DELETE FROM usuario WHERE IDUsuario = ?', [id]

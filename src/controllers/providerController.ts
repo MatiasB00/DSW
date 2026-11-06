@@ -2,12 +2,12 @@ import Boom from '@hapi/boom';
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import * as provider from '../models/providerModel';
 
-export function list() {
+export function findAll() {
   return async (_request: Request, h: ResponseToolkit) =>
     h.response(await provider.findAll()).code(200);
 }
 
-export function get() {
+export function findOne() {
   return async (request: Request, h: ResponseToolkit) => {
     const record = await provider.findOne(Number(request.params.id));
     if (!record) throw Boom.notFound('No se encontró el provider solicitado.');
