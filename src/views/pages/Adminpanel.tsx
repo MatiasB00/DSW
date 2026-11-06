@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { AdminProductos } from './admin/Adminproductos';
 import { AdminProveedores } from './admin/Adminproveedores';
 import { AdminPedidos } from './admin/Adminpedidos';
+import { AdminPreciosImpresiones } from './admin/Adminpreciosimpresiones';
 import './Adminpanel.css';
 
 export function Adminpanel() {
-    const [pestanaActiva, setPestanaActiva] = useState<'productos' | 'proveedores' | 'pedidos'>('productos');
+    const [pestanaActiva, setPestanaActiva] = useState<'productos' | 'proveedores' | 'pedidos' | 'precios'>('productos');
     const [conteos, setConteos] = useState<{
         productos?: number;
         proveedores?: number;
@@ -46,6 +47,13 @@ export function Adminpanel() {
                     >
                         Pedidos {conteos.pedidos !== undefined ? `(${conteos.pedidos})` : ''}
                     </button>
+                    <button
+                        type="button"
+                        className={`admin-tab-btn ${pestanaActiva === 'precios' ? 'active' : ''}`}
+                        onClick={() => setPestanaActiva('precios')}
+                    >
+                        Precios de impresión
+                    </button>
                 </div>
             </header>
 
@@ -60,6 +68,8 @@ export function Adminpanel() {
             {pestanaActiva === 'pedidos' && (
                 <AdminPedidos onCountChange={(c) => actualizarConteo('pedidos', c)} />
             )}
+
+            {pestanaActiva === 'precios' && <AdminPreciosImpresiones />}
         </main>
     );
 }

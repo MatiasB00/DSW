@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/apiFetch';
 import './ProveedoresForm.css';
 
 export interface Proveedor {
@@ -52,7 +53,7 @@ export function ProveedoresForm({ proveedorAEditar, onGuardarExito, onCancelarEd
         const method = esEdicion ? 'PUT' : 'POST';
 
         try {
-            const response = await fetch(url, {
+            const response = await apiFetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

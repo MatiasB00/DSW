@@ -1,6 +1,7 @@
 import Hapi from '@hapi/hapi';
 import { closeDatabase } from './db';
 import { routes } from './routes';
+import { registerJwtAuth } from './auth/jwtAuth';
 
 export async function createServer(): Promise<Hapi.Server> {
   const server = Hapi.server({
@@ -10,6 +11,7 @@ export async function createServer(): Promise<Hapi.Server> {
       validate: { options: { abortEarly: false, convert: true } },
     },
   });
+  registerJwtAuth(server);
   server.route(routes);
   server.events.on('request', (request, event) => {
     if (event.error) {

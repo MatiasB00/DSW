@@ -5,8 +5,7 @@ export interface userInput {
   nombre: string,
   apellido: string,
   email: string,
-  contraseniaHash: string,
-  rol?: string
+  contraseniaHash: string
 }
 
 
@@ -28,13 +27,12 @@ export async function create(user: userInput): Promise<number> {
     user.nombre,
     user.apellido,
     user.email,
-    user.contraseniaHash,
-    user.rol === undefined ? 'cliente' : user.rol
+    user.contraseniaHash
   ];
 
   return databaseOperation(async () => {
     const inserted = (await result(
-      'INSERT INTO Usuario (nombre, apellido, email, contrasenia, rol) VALUES (?, ?, ?, ?, ?)', values
+      'INSERT INTO Usuario (nombre, apellido, email, contrasenia) VALUES (?, ?, ?, ?)', values
     )) as ResultSetHeader;
     return inserted.insertId;
   });
@@ -45,13 +43,12 @@ export async function update(id: number, user: userInput): Promise<boolean> {
     user.nombre,
     user.apellido,
     user.email,
-    user.contraseniaHash,
-    user.rol === undefined ? 'cliente' : user.rol
+    user.contraseniaHash
   ];
 
   return databaseOperation(async ()=> {
     const updated = await result(
-      'UPDATE Usuario SET nombre = ?, apellido = ?, email = ?, contrasenia = ?, rol = ? WHERE IDUsuario = ?',
+      'UPDATE Usuario SET nombre = ?, apellido = ?, email = ?, contrasenia = ? WHERE IDUsuario = ?',
       [...values, id]
     ) as ResultSetHeader;
     

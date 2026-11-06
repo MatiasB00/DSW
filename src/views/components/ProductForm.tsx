@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/apiFetch';
 import './ProductForm.css';
 
 export interface Producto {
@@ -33,7 +34,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
     const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
 
     useEffect(() => {
-        fetch('/api/proveedores')
+        apiFetch('/api/proveedores')
             .then((res) => res.json())
             .then((data) => setProveedores(data))
             .catch((err) => console.error('Error al cargar proveedores:', err));
@@ -41,7 +42,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
 
 
     useEffect(() => {
-        fetch('/api/categorias')
+        apiFetch('/api/categorias')
             .then((res) => res.json())
             .then((data) => setCategorias(data))
             .catch((err) => console.error('Error al cargar categorías:', err));
@@ -76,7 +77,7 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
 
         try {
             if (esEdicion) {
-                const resProd = await fetch(`/api/productos/${productoAEditar!.IDProducto}`, {
+                const resProd = await apiFetch(`/api/productos/${productoAEditar!.IDProducto}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -90,16 +91,17 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                 if (!resProd.ok) throw new Error('No se pudo actualizar el producto.');
 
                 if (Number(precio) !== Number(productoAEditar!.precio)) {
-                    await fetch(`/api/productos/${productoAEditar!.IDProducto}/precios`, {
+                    const resPrecio = await apiFetch(`/api/productos/${productoAEditar!.IDProducto}/precios`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ valor: Number(precio) }),
                     });
+                    if (!resPrecio.ok) throw new Error('No se pudo actualizar el precio.');
                 }
 
                 setMensaje({ tipo: 'exito', texto: '¡Producto y precio actualizados con éxito!' });
             } else {
-                const resProd = await fetch('/api/productos', {
+                const resProd = await apiFetch('/api/productos', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -115,11 +117,12 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
 
                 const dataProd = await resProd.json();
 
-                await fetch(`/api/productos/${dataProd.id}/precios`, {
+                const resPrecio = await apiFetch(`/api/productos/${dataProd.id}/precios`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ valor: Number(precio) }),
                 });
+                if (!resPrecio.ok) throw new Error('El producto se creó, pero no se pudo guardar su precio inicial.');
 
                 setMensaje({ tipo: 'exito', texto: '¡Producto y precio inicial creados con éxito!' });
                 setNombre('');

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../../lib/apiFetch';
 import { ProveedoresForm, Proveedor } from '../../components/ProveedoresForm';
 import './Adminproveedores.css';
 
@@ -15,7 +16,7 @@ export function AdminProveedores({ onCountChange }: AdminProveedoresProps) {
     const cargarProveedores = async () => {
         setCargandoProveedores(true);
         try {
-            const response = await fetch('/api/proveedores');
+            const response = await apiFetch('/api/proveedores');
             if (response.ok) {
                 const data = await response.json();
                 setProveedores(data);
@@ -39,7 +40,7 @@ export function AdminProveedores({ onCountChange }: AdminProveedoresProps) {
         if (!confirmar) return;
 
         try {
-            const response = await fetch(`/api/proveedores/${id}`, {
+            const response = await apiFetch(`/api/proveedores/${id}`, {
                 method: 'DELETE',
             });
 

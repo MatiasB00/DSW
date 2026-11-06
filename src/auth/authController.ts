@@ -2,11 +2,20 @@ import { Request, ResponseToolkit } from "@hapi/hapi";
 import Boom from '@hapi/boom';
 import bycript from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import * as authModel from "../models/authModel";
+import * as authModel from "./authModel";
+import { getJwtSecret } from './jwtsecret';
+import { getAuthCredentials } from './jwtAuth';
 
-
-//secret para firma de tokens, dsp en prod va al .env
-const JWT_SECRET = process.env.JWT_SECRET || 'dsw_imprenta_2026';
+function createToken(user: {
+    IDUsuario: number;
+    email: string;
+}) {
+    return jwt.sign(
+        { IDUsuario: user.IDUsuario, email: user.email },
+        getJwtSecret(),
+        { expiresIn: '8h', algorithm: 'HS256' },
+    );
+}
 
 export async function register(request: Request, h: ResponseToolkit) {
     const payload = request.payload as authModel.UsuarioRegistroInput;
@@ -18,17 +27,7 @@ export async function register(request: Request, h: ResponseToolkit) {
 
     const nuevoUsuario = await authModel.create(payload);
 
-    const token = jwt.sign(
-        {
-            IDUsuario: nuevoUsuario.IDUsuario,
-            email: nuevoUsuario.email,
-            rol: nuevoUsuario.rol,
-            nombre: nuevoUsuario.nombre,
-            apellido: nuevoUsuario.apellido
-        },
-        JWT_SECRET,
-        { expiresIn: '8h' }
-    );
+    const token = createToken(nuevoUsuario);
 
     return h.response({
         mensaje: 'Usuario registrado exitosamente',
@@ -54,17 +53,7 @@ export async function login(request: Request, h: ResponseToolkit) {
         throw Boom.unauthorized('Credenciales inválidas');
     }
 
-    const token = jwt.sign(
-        {
-            IDUsuario: usuario.IDUsuario,
-            email: usuario.email,
-            rol: usuario.rol,
-            nombre: usuario.nombre,
-            apellido: usuario.apellido
-        },
-        JWT_SECRET,
-        { expiresIn: '8h' }
-    );
+    const token = createToken(usuario);
 
     return h.response({
         mensaje: 'Inicio de sesion exitoso',
@@ -77,4 +66,11 @@ export async function login(request: Request, h: ResponseToolkit) {
             rol: usuario.rol
         }
     }).code(200);
+}
+
+export async function me(request: Request, h: ResponseToolkit) {
+    const { IDUsuario, nombre, apellido, email, rol } =
+        getAuthCredentials(request.auth.credentials);
+
+    return h.response({ IDUsuario, nombre, apellido, email, rol }).code(200);
 }

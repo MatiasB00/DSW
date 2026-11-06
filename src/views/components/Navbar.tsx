@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCarrito } from '../context/carritoContext';
+import { apiFetch } from '../lib/apiFetch';
 import './Navbar.css';
 
 interface UsuarioSesion {
@@ -23,11 +24,32 @@ export function Navbar() {
     const { totalItems } = useCarrito();
 
     useEffect(() => {
-        const sincronizarAuth = () => {
-            const stored = localStorage.getItem('user');
-            setUsuario(stored ? JSON.parse(stored) : null);
+        const sincronizarAuth = async () => {
+            if (!localStorage.getItem('token')) {
+                setUsuario(null);
+                return;
+            }
+
+            try {
+                const response = await apiFetch('/api/auth/me');
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    setUsuario(null);
+                    return;
+                }
+                if (!response.ok) {
+                    throw new Error('No se pudo verificar la sesión.');
+                }
+                const currentUser = await response.json();
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                setUsuario(currentUser);
+            } catch (error) {
+                console.error('Error al verificar la sesión:', error);
+            }
         };
 
+        void sincronizarAuth();
         window.addEventListener('authChange', sincronizarAuth);
         window.addEventListener('storage', sincronizarAuth);
 

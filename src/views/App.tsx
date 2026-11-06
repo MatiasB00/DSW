@@ -10,6 +10,7 @@ import { Adminpanel } from './pages/Adminpanel';
 import { Perfil } from './pages/Perfil';
 import { Productos } from './pages/Productos';
 import { Carrito } from './pages/Carrito';
+import { RequireAdmin } from './components/RequireAdmin';
 
 export function App() {
   return (
@@ -22,7 +23,7 @@ export function App() {
           <Route path="/productos" element={<Productos />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/admin" element={<Adminpanel />} />
+          <Route path="/admin" element={<RequireAdmin><Adminpanel /></RequireAdmin>} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/carrito" element={<Carrito />} />
         </Routes>

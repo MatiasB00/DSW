@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS PreciosImpresiones (
   precioColor DECIMAL (12, 2) UNSIGNED NOT NULL,
   factorGanancia DECIMAL (4, 2) NOT NULL DEFAULT 1.00,
   PRIMARY KEY (tamanio, fechaDesde),
+  CONSTRAINT chk_preciosimpresiones_tamanio CHECK (tamanio IN ('A1', 'A2', 'A3', 'A4', 'A5', 'A6')),
   CONSTRAINT chk_precioTamanio CHECK (precioTamanio >= 0),
   CONSTRAINT chk_precioByN CHECK (precioByN >= 0),
   CONSTRAINT chk_precioColor CHECK (precioColor >= 0),
@@ -84,6 +85,7 @@ CREATE TABLE IF NOT EXISTS PedidoImpresion (
   subtotal DECIMAL(12, 2) NOT NULL,
   PRIMARY KEY (IDPedido),
   CONSTRAINT fk_pedidoimpresion_pedido FOREIGN KEY (IDPedido) REFERENCES Pedido (IDPedido) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT chk_pedidoimpresion_tamanio CHECK (tamanio IN ('A1', 'A2', 'A3', 'A4', 'A5', 'A6')),
   CONSTRAINT chk_impresion_copias CHECK (cantCopias > 0),
   CONSTRAINT chk_impresion_subtotal CHECK (subtotal >= 0)
 ) ENGINE = InnoDB;

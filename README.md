@@ -5,11 +5,11 @@ Backend REST en Node.js, TypeScript, Hapi, Joi y MySQL. La lógica HTTP está en
 ## Puesta en marcha
 
 1. Crear el esquema ejecutando `database/schema.sql` con MySQL 8.0.16 o superior.
-2. Copiar `.env.example` a `.env` y completar las credenciales.
+2. Copiar `.env.example` a `.env`, completar las credenciales de MySQL y reemplazar `JWT_SECRET` por un secreto aleatorio. Se puede generar con `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
 3. Ejecutar `npm install`.
 4. Ejecutar `npm run dev` para desarrollo, o `npm run build` y luego `npm start`.
 
-El servidor escucha en `http://localhost:3000` por defecto. Los campos monetarios usan `DECIMAL(12,2)`. `rol` y `estado` son cadenas para permitir que el negocio defina sus propios valores.
+El servidor escucha en `http://localhost:3000` por defecto. Los campos monetarios usan `DECIMAL(12,2)`. Los roles válidos son `cliente` y `admin`; el registro público siempre crea clientes. Para asignar un administrador, actualiza manualmente el campo `Usuario.rol` en la base de datos. El secreto JWT no debe compartirse ni subirse al repositorio.
 
 ## API
 
@@ -17,21 +17,26 @@ Todos los endpoints están bajo `/api`.
 
 | Recurso | Operaciones |
 | --- | --- |
-| `/usuarios` | GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}` |
-| `/productos` | GET lista, GET `/{id}`, POST, PUT `/{id}`, DELETE `/{id}` |
-| `/pedidos` | GET lista, GET `/{id}`, POST, PATCH `/{id}`, DELETE `/{id}` |
-| `/pedidos/{id}/items` | POST para agregar un producto a un pedido de insumos |
-| `/pedidos/{id}/items/{productoId}` | PATCH para cambiar cantidad, DELETE para quitar producto |
-| `/pedidos/{id}/impresion` | PATCH para actualizar los datos de un pedido de impresión |
+| `/auth/register`, `/auth/login` | Registro e inicio de sesión públicos |
+| `/auth/me` | GET usuario de la sesión actual (requiere token) |
+| `/usuarios` | Operaciones administrativas (requieren rol `admin`) |
+| `/productos` | GET público; POST, PUT y DELETE requieren rol `admin` |
+| `/proveedores` | Operaciones administrativas (requieren rol `admin`) |
+| `/categorias` | GET público; POST, PUT y DELETE requieren rol `admin` |
+| `/productos/{id}/precios` | GET historial y POST precio (requieren rol `admin`) |
+| `/precios-impresiones` | GET público; POST requiere rol `admin` |
+| `/precios-impresiones/{tamanio}/{fechaDesde}` | PUT requiere rol `admin`; `fechaDesde` identifica el registro y no se modifica. No existe DELETE |
+| Tamaños de impresión | Solo se permiten `A1`, `A2`, `A3`, `A4`, `A5` y `A6` en precios y pedidos |
+| `/pedidos` | GET pedidos propios para clientes o todos para admins; POST requiere sesión |
+| `/pedidos/{id}` | GET solo para el dueño del pedido o un admin |
+| `/pedidos/{id}/estado` | PATCH de estado, solo para admins |
 
-Crear un pedido requiere `tipo: "insumo"` con al menos un elemento en `items`, o `tipo: "impresion"` con sus datos específicos en `impresion`. El backend crea pedido y subtipo en la misma transacción y calcula `total`; para insumos obtiene el precio vigente del producto. No se permite borrar el último producto de un pedido de insumos.
+Las solicitudes protegidas deben incluir `Authorization: Bearer <token>`. Los tokens vencen a las 8 horas. Una solicitud sin token válido recibe `401`; un usuario autenticado sin permisos recibe `403`. El ID del cliente al crear un pedido se obtiene de la sesión, no del cuerpo enviado por el navegador. Los pedidos no se pueden borrar ni editar; solo un admin puede cambiar su estado.
 
 Ejemplo de pedido de insumos:
 
 ```json
 {
-  "IDUsuario": 1,
-  "estado": "pendiente",
   "tipo": "insumo",
   "items": [{ "IDProducto": 1, "cantidad": 20 }]
 }
@@ -41,8 +46,6 @@ Ejemplo de pedido de impresión:
 
 ```json
 {
-  "IDUsuario": 1,
-  "estado": "pendiente",
   "tipo": "impresion",
   "impresion": {
     "cantCopias": 100,
@@ -57,4 +60,4 @@ Ejemplo de pedido de impresión:
 
 La base de datos mantiene las claves foráneas y restricciones locales; la regla de especialización total y disjunta (exactamente un subtipo por pedido) se asegura en la creación transaccional de la API, ya que MySQL no admite restricciones diferibles entre tablas.
 
-Los identificadores son autoincrementales. Los pedidos no permiten cambiar de subtipo al actualizarlos. El borrado de un usuario con pedidos o de un producto que aparece en pedidos se rechaza por integridad referencial.
+Los identificadores son autoincrementales. Los pedidos comienzan en estado `en preparacion`; los estados permitidos son `en preparacion`, `entregado` y `cancelado`. El borrado de un usuario con pedidos o de un producto que aparece en pedidos se rechaza por integridad referencial.

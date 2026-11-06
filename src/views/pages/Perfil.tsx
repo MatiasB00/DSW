@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { apiFetch } from '../lib/apiFetch';
 import './Perfil.css';
 
 interface PedidoItemDetalle {
@@ -48,7 +49,7 @@ export function Perfil() {
             try {
                 setCargando(true);
                 setError(null);
-                const res = await fetch(`/api/pedidos?userId=${usuario.IDUsuario}`);
+                const res = await apiFetch('/api/pedidos');
                 if (!res.ok) throw new Error('No se pudieron obtener los pedidos.');
                 const data = await res.json();
                 setPedidos(data);
@@ -74,7 +75,7 @@ export function Perfil() {
 
         try {
             setCargandoDetalleId(idPedido);
-            const res = await fetch(`/api/pedidos/${idPedido}`);
+            const res = await apiFetch(`/api/pedidos/${idPedido}`);
             if (res.ok) {
                 const data = await res.json();
                 setDetallesCargados((prev) => ({

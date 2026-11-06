@@ -1,7 +1,7 @@
 import bycript from 'bcryptjs';
-import { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import { databaseOperation, result, rows } from '../db';
-import * as userModel from './userModel'
+import { RowDataPacket } from 'mysql2/promise';
+import { databaseOperation, rows } from '../db';
+import * as userModel from '../models/userModel'
 
 export interface UsuarioRow extends RowDataPacket {
     IDUsuario: number;
@@ -12,13 +12,20 @@ export interface UsuarioRow extends RowDataPacket {
     rol: string;
 }
 
+export interface AuthIdentity extends RowDataPacket {
+    IDUsuario: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    rol: string;
+}
+
 
 export interface UsuarioRegistroInput {
     nombre: string;
     apellido: string;
     email: string;
     contrasenia: string;
-    rol?: string;
 }
 
 export async function findByEmail(email: string): Promise<UsuarioRow | null> {
@@ -31,6 +38,16 @@ export async function findByEmail(email: string): Promise<UsuarioRow | null> {
     })
 }
 
+export async function findById(id: number): Promise<AuthIdentity | null> {
+    const found = await databaseOperation(() => 
+        rows<AuthIdentity>(
+            'SELECT IDUsuario, nombre, apellido, email, rol FROM Usuario WHERE IDUsuario = ?',
+            [id]
+        )
+    );
+    return found[0] ?? null;
+}
+
 export async function create(datos: UsuarioRegistroInput) {
     return databaseOperation(async () => {
         const contraseniaHash = await bycript.hash(datos.contrasenia, 10);
@@ -39,9 +56,7 @@ export async function create(datos: UsuarioRegistroInput) {
             nombre: datos.nombre,
             apellido: datos.apellido,
             email: datos.email,
-            contraseniaHash,
-            rol: datos.rol
-            
+            contraseniaHash 
         })
 
         return {
@@ -49,7 +64,7 @@ export async function create(datos: UsuarioRegistroInput) {
             nombre: datos.nombre,
             apellido: datos.apellido,
             email: datos.email,
-            rol: datos.rol ?? 'cliente'
+            rol: 'cliente'
         };
     })
 }

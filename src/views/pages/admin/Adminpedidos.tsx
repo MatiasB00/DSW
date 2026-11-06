@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../../lib/apiFetch';
 import './Adminpedidos.css';
 
 interface PedidoItemDetalle {
@@ -49,7 +50,7 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
     const cargarPedidos = async () => {
         setCargandoPedidos(true);
         try {
-            const response = await fetch('/api/pedidos');
+            const response = await apiFetch('/api/pedidos');
             if (response.ok) {
                 const data = await response.json();
                 setPedidos(data);
@@ -69,7 +70,7 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
     const handleCambiarEstado = async (idPedido: number, nuevoEstado: string) => {
         try {
             setActualizandoEstadoId(idPedido);
-            const res = await fetch(`/api/pedidos/${idPedido}/estado`, {
+            const res = await apiFetch(`/api/pedidos/${idPedido}/estado`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado: nuevoEstado }),
@@ -104,7 +105,7 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
 
         try {
             setCargandoDetalleId(idPedido);
-            const res = await fetch(`/api/pedidos/${idPedido}`);
+            const res = await apiFetch(`/api/pedidos/${idPedido}`);
             if (res.ok) {
                 const data = await res.json();
                 setDetallesCargados((prev) => ({

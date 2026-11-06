@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/apiFetch';
 import './CategoriasManager.css';
 
 export interface Categoria {
@@ -19,7 +20,7 @@ export function CategoriasManager({ onCategoriasChange }: CategoriaManagerProps)
 
     const cargarCategorias = async () => {
         try {
-            const res = await fetch('/api/categorias');
+            const res = await apiFetch('/api/categorias');
             if (res.ok) {
                 const data = await res.json();
                 setCategorias(data);
@@ -46,7 +47,7 @@ export function CategoriasManager({ onCategoriasChange }: CategoriaManagerProps)
         const method = esEdicion ? 'PUT' : 'POST';
 
         try {
-            const res = await fetch(url, {
+            const res = await apiFetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nombre: nombreLimpio }),
@@ -88,7 +89,7 @@ export function CategoriasManager({ onCategoriasChange }: CategoriaManagerProps)
         if (!confirmar) return;
 
         try {
-            const res = await fetch(`/api/categorias/${id}`, { method: 'DELETE' });
+            const res = await apiFetch(`/api/categorias/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('No se pudo eliminar la categoría.');
 
             if (categoriaAEditar?.IDCategoria === id) {

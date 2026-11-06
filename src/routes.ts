@@ -2,12 +2,14 @@ import { ServerRoute } from '@hapi/hapi';
 import Joi from 'joi';
 import * as orderController from './controllers/orderController';
 import * as priceController from './controllers/priceController';
-import * as authController from './controllers/authController';
+import * as printingPriceController from './controllers/printingPriceController';
+import * as authController from './auth/authController';
 import * as userController from './controllers/userController';
 import * as productController from './controllers/productController';
 import * as providerController from './controllers/providerController';
 import * as categoryController from './controllers/categoryController';
 import { ORDER_STATUSES } from './models/orderModel';
+import { PRINTING_SIZES } from './shared/printingSizes';
 
 const idParams = Joi.object({
   id: Joi.number().integer().positive().max(4294967295).required(),
@@ -17,17 +19,15 @@ const usuarioSchema = Joi.object({
   nombre: Joi.string().trim().min(1).max(100).required(),
   apellido: Joi.string().trim().min(1).max(100).required(),
   email: Joi.string().trim().email().max(254).required(),
-  contraseniaHash: Joi.string().trim().min(6).max(20).required(),
-  rol: Joi.string().trim().min(1).max(30).required(),
-});
+  contraseniaHash: Joi.string().trim().min(6).max(20).required()
+}).unknown(false);
 
 const registroSchema = Joi.object({
   nombre: Joi.string().trim().min(1).max(100).required(),
   apellido: Joi.string().trim().min(1).max(100).required(),
   email: Joi.string().trim().email().max(254).required(),
-  contrasenia: Joi.string().trim().min(6).max(128).required(),
-  rol: Joi.string().valid('admin', 'cliente').optional(),
-})
+  contrasenia: Joi.string().trim().min(6).max(128).required()
+}).unknown(false);
 
 const loginSchema = Joi.object({
   email: Joi.string().trim().email().max(254).required(),
@@ -55,8 +55,41 @@ const precioSchema = Joi.object({
   valor: Joi.number().precision(2).min(0).max(9999999999.99).required(),
 });
 
+const printingPriceFields = {
+  tamanio: Joi.string().trim().valid(...PRINTING_SIZES).required(),
+  precioTamanio: Joi.number().precision(2).min(0).max(9999999999.99).required(),
+  precioByN: Joi.number().precision(2).min(0).max(9999999999.99).required(),
+  precioColor: Joi.number().precision(2).min(0).max(9999999999.99).required(),
+  factorGanancia: Joi.number().precision(2).min(1).max(10).default(1),
+};
+
+const printingPriceCreateSchema = Joi.object(printingPriceFields).unknown(false);
+const printingPriceUpdateSchema = Joi.object(printingPriceFields).unknown(false);
+const printingPriceParams = Joi.object({
+  tamanio: Joi.string().trim().valid(...PRINTING_SIZES).required(),
+  fechaDesde: Joi.string()
+    .pattern(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+    .custom((value, helpers) => {
+      const [date, time] = value.split(' ');
+      const [year, month, day] = date.split('-').map(Number);
+      const [hour, minute, second] = time.split(':').map(Number);
+      const parsed = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+      if (
+        parsed.getUTCFullYear() !== year ||
+        parsed.getUTCMonth() !== month - 1 ||
+        parsed.getUTCDate() !== day ||
+        hour > 23 ||
+        minute > 59 ||
+        second > 59
+      ) {
+        return helpers.error('date.base');
+      }
+      return value;
+    })
+    .required(),
+});
+
 const orderFields = {
-  IDUsuario: Joi.number().integer().positive().max(4294967295).required(),
   fecha: Joi.string().isoDate().optional()
 };
 
@@ -68,7 +101,7 @@ const itemSchema = Joi.object({
 const printDetailsSchema = Joi.object({
   cantCopias: Joi.number().integer().positive().max(4294967295).required(),
   faz: Joi.string().trim().min(1).max(30).required(),
-  tamanio: Joi.string().trim().min(1).max(50).required(),
+  tamanio: Joi.string().trim().valid(...PRINTING_SIZES).required(),
   archivo: Joi.string().trim().min(1).max(2048).required(),
   observacion: Joi.string().allow('', null).optional(),
   subtotal: Joi.number().precision(2).min(0).max(9999999999.99).required(),
@@ -80,13 +113,13 @@ const orderSchema = Joi.alternatives().try(
     tipo: Joi.string().valid('insumo').required(),
     items: Joi.array().items(itemSchema).min(1).required(),
     impresion: Joi.forbidden(),
-  }),
+  }).unknown(false),
   Joi.object({
     ...orderFields,
     tipo: Joi.string().valid('impresion').required(),
     impresion: printDetailsSchema.required(),
     items: Joi.forbidden(),
-  }),
+  }).unknown(false),
 );
 
 const updateOrderStatusSchema = Joi.object({
@@ -110,72 +143,80 @@ export const routes: ServerRoute[] = [
     options: { validate: { payload: loginSchema } },
     handler: authController.login,
   },
+  {
+    method: 'GET',
+    path: '/api/auth/me',
+    options: { auth: { strategy: 'jwt' } },
+    handler: authController.me,
+  },
 
   {
     method: 'GET',
     path: '/api/proveedores',
+    options: { auth: { strategy: 'jwt', scope: ['admin'] } },
     handler: providerController.findAll()
   },
 
   {
     method: 'GET',
     path: '/api/proveedores/{id}',
-    options: { validate: { params: idParams } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams } },
     handler: providerController.findOne()
   },
 
   {
     method: 'POST',
     path: '/api/proveedores',
-    options: { validate: { payload: proveedorSchema } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { payload: proveedorSchema } },
     handler: providerController.create()
   },
 
   {
     method: 'PUT',
     path: '/api/proveedores/{id}',
-    options: { validate: { params: idParams, payload: proveedorSchema } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams, payload: proveedorSchema } },
     handler: providerController.update()
   },
 
   {
     method: 'DELETE',
     path: '/api/proveedores/{id}',
-    options: { validate: { params: idParams } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams } },
     handler: providerController.remove()
   },
 
   {
     method: 'GET',
     path: '/api/usuarios',
+    options: { auth: { strategy: 'jwt', scope: ['admin'] } },
     handler: userController.findAll()
   },
 
   {
     method: 'GET',
     path: '/api/usuarios/{id}',
-    options: { validate: { params: idParams } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams } },
     handler: userController.findOne()
   },
 
   {
     method: 'POST',
     path: '/api/usuarios',
-    options: { validate: { payload: usuarioSchema } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { payload: usuarioSchema } },
     handler: userController.create()
   },
 
   {
     method: 'PUT',
     path: '/api/usuarios/{id}',
-    options: { validate: { params: idParams, payload: usuarioSchema } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams, payload: usuarioSchema } },
     handler: userController.update()
   },
 
   {
     method: 'DELETE',
     path: '/api/usuarios/{id}',
-    options: { validate: { params: idParams } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams } },
     handler: userController.remove()
   },
 
@@ -195,40 +236,64 @@ export const routes: ServerRoute[] = [
   {
     method: 'POST',
     path: '/api/productos',
-    options: { validate: { payload: productoSchema } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { payload: productoSchema } },
     handler: productController.create()
   },
 
   {
     method: 'PUT',
     path: '/api/productos/{id}',
-    options: { validate: { params: idParams, payload: productoSchema } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams, payload: productoSchema } },
     handler: productController.update()
   },
 
   {
     method: 'DELETE',
     path: '/api/productos/{id}',
-    options: { validate: { params: idParams } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams } },
     handler: productController.remove()
   },
 
   {
     method: 'GET',
     path: '/api/pedidos',
+    options: { auth: { strategy: 'jwt' } },
     handler: orderController.findAll
   },
   {
     method: 'GET',
     path: '/api/productos/{id}/precios',
-    options: { validate: { params: idParams } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams } },
     handler: priceController.findAll,
   },
   {
     method: 'POST',
     path: '/api/productos/{id}/precios',
-    options: { validate: { params: idParams, payload: precioSchema } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams, payload: precioSchema } },
     handler: priceController.create,
+  },
+  {
+    method: 'GET',
+    path: '/api/precios-impresiones',
+    handler: printingPriceController.findAll,
+  },
+  {
+    method: 'POST',
+    path: '/api/precios-impresiones',
+    options: {
+      auth: { strategy: 'jwt', scope: ['admin'] },
+      validate: { payload: printingPriceCreateSchema },
+    },
+    handler: printingPriceController.create,
+  },
+  {
+    method: 'PUT',
+    path: '/api/precios-impresiones/{tamanio}/{fechaDesde}',
+    options: {
+      auth: { strategy: 'jwt', scope: ['admin'] },
+      validate: { params: printingPriceParams, payload: printingPriceUpdateSchema },
+    },
+    handler: printingPriceController.update,
   },
   {
     method: 'GET',
@@ -244,38 +309,41 @@ export const routes: ServerRoute[] = [
   {
     method: 'POST',
     path: '/api/categorias',
-    options: { validate: { payload: categoriaSchema } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { payload: categoriaSchema } },
     handler: categoryController.create()
   },
   {
     method: 'PUT',
     path: '/api/categorias/{id}',
-    options: { validate: { params: idParams, payload: categoriaSchema } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams, payload: categoriaSchema } },
     handler: categoryController.update()
   },
   {
     method: 'DELETE',
     path: '/api/categorias/{id}',
-    options: { validate: { params: idParams } },
+    options: { auth: { strategy: 'jwt', scope: ['admin'] }, validate: { params: idParams } },
     handler: categoryController.remove()
   },
 
   {
     method: 'GET',
     path: '/api/pedidos/{id}',
-    options: { validate: { params: idParams } },
+    options: { auth: { strategy: 'jwt' }, validate: { params: idParams } },
     handler: orderController.findOne,
   },
   {
     method: 'POST',
     path: '/api/pedidos',
-    options: { validate: { payload: orderSchema } },
+    options: { auth: { strategy: 'jwt' }, validate: { payload: orderSchema } },
     handler: orderController.create,
   },
   {
     method: 'PATCH',
     path: '/api/pedidos/{id}/estado',
-    options: { validate: { params: idParams, payload: updateOrderStatusSchema } },
+    options: {
+      auth: { strategy: 'jwt', scope: ['admin'] },
+      validate: { params: idParams, payload: updateOrderStatusSchema },
+    },
     handler: orderController.update,
   },
 ];

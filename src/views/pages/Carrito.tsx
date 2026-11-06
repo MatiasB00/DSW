@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCarrito } from '../context/carritoContext';
+import { apiFetch } from '../lib/apiFetch';
 import './Carrito.css';
 
 
@@ -23,9 +24,7 @@ export function Carrito() {
 
     const handleConfirmarPedido = async () => {
         setErrorPedido(null);
-        const usuarioGuardado = localStorage.getItem('user');
-        const usuario = usuarioGuardado ? JSON.parse(usuarioGuardado) : null;
-        if (!usuario || !usuario.IDUsuario) {
+        if (!localStorage.getItem('token')) {
             alert('Debés iniciar sesión para confirmar tu pedido.');
             navigate('/login');
             return;
@@ -33,13 +32,12 @@ export function Carrito() {
         if (items.length === 0) return;
         setEnviando(true);
         try {
-            const res = await fetch('/api/pedidos', {
+            const res = await apiFetch('/api/pedidos', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    IDUsuario: usuario.IDUsuario,
                     tipo: 'insumo',
                     items: items.map((item) => ({
                         IDProducto: item.IDProducto,

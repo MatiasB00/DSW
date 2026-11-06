@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../../lib/apiFetch';
 import { ProductForm, Producto } from '../../components/ProductForm';
 import { CategoriasManager } from '../../components/CategoriasManager';
 import './Adminproductos.css';
@@ -21,7 +22,7 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
     const cargarProductos = async () => {
         setCargandoProductos(true);
         try {
-            const response = await fetch('/api/productos');
+            const response = await apiFetch('/api/productos');
             if (response.ok) {
                 const data = await response.json();
                 setProductos(data);
@@ -48,7 +49,7 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
         if (!confirmar) return;
 
         try {
-            const response = await fetch(`/api/productos/${id}`, {
+            const response = await apiFetch(`/api/productos/${id}`, {
                 method: 'DELETE',
             });
 
@@ -72,7 +73,7 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
         setCargandoHistorial(true);
         setErrorHistorial(null);
         try {
-            const respuesta = await fetch(`/api/productos/${id}/precios`);
+            const respuesta = await apiFetch(`/api/productos/${id}/precios`);
             if (!respuesta.ok) {
                 throw new Error('No se pudo obtener el historial de precios.');
             }

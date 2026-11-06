@@ -1,0 +1,100 @@
+.printing-prices-note,
+.printing-price-created {
+  color: #736257;
+  font-size: 0.9rem;
+  margin-block-end: 1rem;
+}
+
+.printing-prices-message {
+  border-radius: 6px;
+  font-weight: 600;
+  margin-block-end: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.printing-prices-message.is-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.printing-prices-message.is-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.printing-price-form {
+  background: #faf6f0;
+  border: 1px solid #ebdcd0;
+  border-radius: 8px;
+  margin-block-end: 2rem;
+  padding: 1.25rem;
+}
+
+.printing-price-form h3 {
+  margin-block-end: 1rem;
+}
+
+.printing-price-fields {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.printing-price-fields label {
+  color: #55453b;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  font-weight: 700;
+  gap: 0.4rem;
+}
+
+.printing-price-fields input,
+.printing-price-fields select {
+  background: #fffdfa;
+  border: 1px solid #ebdcd0;
+  border-radius: 6px;
+  color: #2b211b;
+  font-size: 0.95rem;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+}
+
+.printing-price-fields input:focus,
+.printing-price-fields select:focus {
+  border-color: #b91c1c;
+  outline: 2px solid rgb(185 28 28 / 15%);
+}
+
+.printing-price-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-block-start: 1rem;
+}
+
+.printing-prices-table-wrap {
+  overflow-x: auto;
+}
+
+.printing-prices-table {
+  border-collapse: collapse;
+  inline-size: 100%;
+  min-inline-size: 800px;
+  text-align: left;
+}
+
+.printing-prices-table th,
+.printing-prices-table td {
+  border-bottom: 1px solid #ebdcd0;
+  padding: 0.75rem;
+  white-space: nowrap;
+}
+
+.printing-prices-table th {
+  color: #55453b;
+  font-size: 0.85rem;
+}
