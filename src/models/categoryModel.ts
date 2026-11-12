@@ -1,5 +1,6 @@
 import { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { databaseOperation, result, rows, SqlValue } from '../db';
+import { prisma } from '../../lib/prisma'
 
 export interface CategoryInput {
     nombre: string;

@@ -5,15 +5,18 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "front": "vite",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build": "prisma generate && tsc",
+    "start": "node dist/src/index.js"
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@hapi/hapi": "^21.3.12",
+    "@prisma/adapter-mariadb": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "bcryptjs": "^3.0.3",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.3",
+    "mariadb": "^3.5.5",
     "mysql2": "^3.11.5",
     "pdfjs-dist": "^6.5.438",
     "react": "^19.3.0",
