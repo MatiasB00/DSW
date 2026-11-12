@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model categoria {
+  IDCategoria Int        @id @default(autoincrement()) @db.UnsignedInt
+  nombre      String     @unique(map: "nombre") @db.VarChar(30)
+  producto    producto[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pedido {
+  IDPedido        Int              @id @default(autoincrement()) @db.UnsignedInt
+  fecha           DateTime         @default(now()) @db.DateTime(0)
+  estado          String           @db.VarChar(30)
+  total           Decimal          @default(0.00) @db.Decimal(12, 2)
+  IDUsuario       Int              @db.UnsignedInt
+  usuario         usuario          @relation(fields: [IDUsuario], references: [IDUsuario], map: "fk_pedido_usuario")
+  pedidoimpresion pedidoimpresion?
+  pedidoinsumo    pedidoinsumo?
+
+  @@index([IDUsuario], map: "idx_pedido_usuario")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pedidoimpresion {
+  IDPedido           Int                       @id @db.UnsignedInt
+  cantCopias         Int                       @db.UnsignedInt
+  faz                pedidoimpresion_faz
+  tamanio            String                    @db.VarChar(30)
+  tipoColor          pedidoimpresion_tipoColor
+  fechaPrecioDesde   DateTime                  @db.DateTime(0)
+  observacion        String?                   @db.Text
+  subtotal           Decimal                   @db.Decimal(12, 2)
+  pedido             pedido                    @relation(fields: [IDPedido], references: [IDPedido], onDelete: Cascade, map: "fk_pedidoimpresion_pedido")
+  preciosimpresiones preciosimpresiones        @relation(fields: [tamanio, fechaPrecioDesde], references: [tamanio, fechaDesde], onUpdate: Restrict, map: "fk_pedidoimpresion_precio")
+
+  @@index([tamanio, fechaPrecioDesde], map: "fk_pedidoimpresion_precio")
+}
+
+model pedidoinsumo {
+  IDPedido Int       @id @db.UnsignedInt
+  pedido   pedido    @relation(fields: [IDPedido], references: [IDPedido], onDelete: Cascade, map: "fk_pedidoinsumo_pedido")
+  prodped  prodped[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model precio {
+  IDProducto Int      @db.UnsignedInt
+  fechaDesde DateTime @default(now()) @db.DateTime(0)
+  valor      Decimal  @db.Decimal(12, 2)
+  producto   producto @relation(fields: [IDProducto], references: [IDProducto], onDelete: Cascade, map: "fk_precio_producto")
+
+  @@id([IDProducto, fechaDesde])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model preciosimpresiones {
+  fechaDesde      DateTime          @default(now()) @db.DateTime(0)
+  tamanio         String            @db.VarChar(30)
+  precioTamanio   Decimal           @db.Decimal(12, 2)
+  precioByN       Decimal           @db.Decimal(12, 2)
+  precioColor     Decimal           @db.Decimal(12, 2)
+  factorGanancia  Decimal           @default(1.00) @db.Decimal(4, 2)
+  pedidoimpresion pedidoimpresion[]
+
+  @@id([tamanio, fechaDesde])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model prodped {
+  IDPedido     Int          @db.UnsignedInt
+  IDProducto   Int          @db.UnsignedInt
+  cantidad     Int          @db.UnsignedInt
+  subtotal     Decimal      @db.Decimal(12, 2)
+  pedidoinsumo pedidoinsumo @relation(fields: [IDPedido], references: [IDPedido], onDelete: Cascade, map: "fk_prodped_pedidoinsumo")
+  producto     producto     @relation(fields: [IDProducto], references: [IDProducto], map: "fk_prodped_producto")
+
+  @@id([IDPedido, IDProducto])
+  @@index([IDProducto], map: "idx_prodped_producto")
+}
+
+model producto {
+  IDProducto  Int        @id @default(autoincrement()) @db.UnsignedInt
+  nombre      String     @db.VarChar(150)
+  descripcion String     @db.Text
+  stock       Int        @default(0) @db.UnsignedInt
+  IDProveedor Int?       @db.UnsignedInt
+  IDCategoria Int?       @db.UnsignedInt
+  precio      precio[]
+  prodped     prodped[]
+  categoria   categoria? @relation(fields: [IDCategoria], references: [IDCategoria], map: "fk_producto_categoria")
+  proveedor   proveedor? @relation(fields: [IDProveedor], references: [IDProveedor], map: "fk_producto_proveedor")
+
+  @@index([IDCategoria], map: "idx_producto_categoria")
+  @@index([IDProveedor], map: "idx_producto_proveedor")
+}
+
+model proveedor {
+  IDProveedor Int        @id @default(autoincrement()) @db.UnsignedInt
+  cuit        String     @unique(map: "uq_proveedor_cuit") @db.VarChar(20)
+  razonSocial String     @db.VarChar(150)
+  email       String     @unique(map: "uq_proveedor_email") @db.VarChar(254)
+  telefono    String?    @db.VarChar(50)
+  direccion   String?    @db.VarChar(255)
+  producto    producto[]
+}
+
+model usuario {
+  IDUsuario   Int      @id @default(autoincrement()) @db.UnsignedInt
+  nombre      String   @db.VarChar(100)
+  apellido    String   @db.VarChar(100)
+  email       String   @unique(map: "uq_usuario_email") @db.VarChar(254)
+  contrasenia String   @db.VarChar(255)
+  rol         String   @default("cliente") @db.VarChar(30)
+  pedido      pedido[]
+}
+
+enum pedidoimpresion_faz {
+  simple
+  doble
+}
+
+enum pedidoimpresion_tipoColor {
+  blanco_y_negro @map("blanco y negro")
+  color
+}
