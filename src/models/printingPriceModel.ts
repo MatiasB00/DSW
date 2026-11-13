@@ -1,4 +1,4 @@
-import { conflict, badRequest } from '@hapi/boom';
+import { conflict } from '@hapi/boom';
 import { Prisma } from '../../generated/prisma/client';
 import { prisma } from '../../lib/prisma';
 
