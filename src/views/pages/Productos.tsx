@@ -257,12 +257,14 @@ export function Productos() {
                 </section>
             </div>
 
-            <ProductoModal
-                producto={productoSeleccionado}
-                onClose={() => setProductoSeleccionado(null)}
-                onAgregar={handleAgregar}
-                agregadoId={agregadoId}
-            />
+            {productoSeleccionado && (
+                <ProductoModal
+                    producto={productoSeleccionado}
+                    onClose={() => setProductoSeleccionado(null)}
+                    onAgregar={handleAgregar}
+                    agregadoId={agregadoId}
+                />
+            )}
         </main>
     );
 }

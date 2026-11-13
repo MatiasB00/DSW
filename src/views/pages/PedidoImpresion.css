@@ -16,8 +16,7 @@
     margin: 0;
 }
 
-.print-order-header p,
-.print-order-price-note {
+.print-order-header p {
     color: #736257;
     font-size: 0.9rem;
 }
