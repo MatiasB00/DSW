@@ -1,6 +1,6 @@
-import Boom from '@hapi/boom';
-import { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import { databaseOperation, result, rows, transaction } from '../db';
+import { conflict, badRequest } from '@hapi/boom';
+import { Prisma } from '../../generated/prisma/client';
+import { prisma } from '../../lib/prisma';
 
 export interface PrintingPriceInput {
   tamanio: string;
@@ -10,94 +10,112 @@ export interface PrintingPriceInput {
   factorGanancia?: number;
 }
 
-export interface PrintingPriceRow extends RowDataPacket {
-  fechaDesde: string;
-  tamanio: string;
-  precioTamanio: string | number;
-  precioByN: string | number;
-  precioColor: string | number;
-  factorGanancia: string | number;
+function isPrismaError(
+  error: unknown,
+): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError;
 }
 
-export async function findAll(): Promise<PrintingPriceRow[]> {
-  return databaseOperation(() =>
-    rows<PrintingPriceRow>(
-      `SELECT DATE_FORMAT(fechaDesde, '%Y-%m-%d %H:%i:%s') AS fechaDesde,
-              tamanio, precioTamanio, precioByN, precioColor, factorGanancia
-       FROM PreciosImpresiones
-       ORDER BY tamanio, fechaDesde DESC`,
-    ),
-  );
-}
-
-export async function create(input: PrintingPriceInput): Promise<void> {
-  await databaseOperation(async () => {
-    await result(
-      `INSERT INTO PreciosImpresiones
-         (fechaDesde, tamanio, precioTamanio, precioByN, precioColor, factorGanancia)
-       SELECT GREATEST(
-                CURRENT_TIMESTAMP,
-                COALESCE(DATE_ADD(MAX(fechaDesde), INTERVAL 1 SECOND), CURRENT_TIMESTAMP)
-              ),
-              ?, ?, ?, ?, ?
-       FROM PreciosImpresiones
-       WHERE tamanio = ?`,
-      [
-        input.tamanio,
-        input.precioTamanio,
-        input.precioByN,
-        input.precioColor,
-        input.factorGanancia ?? 1,
-        input.tamanio,
-      ],
-    );
+export async function findAll() {
+  return prisma.preciosimpresiones.findMany({
+    select: {
+      fechaDesde: true,
+      tamanio: true,
+      precioTamanio: true,
+      precioByN: true,
+      precioColor: true,
+      factorGanancia: true,
+    },
+    orderBy: [{ tamanio: 'asc' }, { fechaDesde: 'desc' }],
   });
 }
 
+export async function create(input: PrintingPriceInput): Promise<void> {
+  const now = new Date();
+  now.setMilliseconds(0);
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const latest = await tx.preciosimpresiones.findFirst({ //encontrame el ultimo precio para este tamaño
+        where: { tamanio: input.tamanio },
+        orderBy: { fechaDesde: 'desc' },
+        select: { fechaDesde: true },
+      });
+
+      const nextAfterLatest = latest // verifica si hubo un precio antes para ese tamaño o no. si existio, pone fecha de ese + 1 seg
+        ? new Date(latest.fechaDesde.getTime() + 1000) //si nunca hubo, le pone la fecha y hora de ahora
+        : now;
+      const fechaDesde = nextAfterLatest > now ? nextAfterLatest : now;
+
+      await tx.preciosimpresiones.create({
+        data: {
+          fechaDesde,
+          tamanio: input.tamanio,
+          precioTamanio: input.precioTamanio,
+          precioByN: input.precioByN,
+          precioColor: input.precioColor,
+          factorGanancia: input.factorGanancia ?? 1,
+        },
+        select: { tamanio: true },
+      });
+    });
+  } catch (error) {
+    if (isPrismaError(error) && error.code === 'P2002') {
+      throw conflict('Ya existe un precio para ese tamaño y fecha.');
+    }
+    throw error;
+  }
+}
+
 export async function update(
-  originalTamanio: string,
+  originalSize: string,
   fechaDesde: string,
   input: PrintingPriceInput,
 ): Promise<boolean> {
-  return databaseOperation(() =>
-    transaction(async (connection) => {
-      const current = await rows<RowDataPacket>(
-        `SELECT tamanio FROM PreciosImpresiones
-         WHERE tamanio = ? AND fechaDesde = ? FOR UPDATE`,
-        [originalTamanio, fechaDesde],
-        connection,
-      );
-      if (!current[0]) return false;
+  const fechaPrisma = new Date(fechaDesde);
 
-      if (input.tamanio !== originalTamanio) {
-        const duplicate = await rows<RowDataPacket>(
-          `SELECT tamanio FROM PreciosImpresiones
-           WHERE tamanio = ? AND fechaDesde = ? FOR UPDATE`,
-          [input.tamanio, fechaDesde],
-          connection,
-        );
-        if (duplicate[0]) {
-          throw Boom.conflict('Ya existe un precio para ese tamaño y fecha.');
-        }
+  try {
+    return await prisma.$transaction(async (tx) => {
+
+      const current = await tx.preciosimpresiones.findUnique({ //checkea que existe para updatear
+        where: {
+          tamanio_fechaDesde: {
+            tamanio: originalSize,
+            fechaDesde: fechaPrisma
+          }
+        },
+        select: { tamanio: true },
+      });
+      if (!current) return false;
+
+      await tx.preciosimpresiones.update({ //hace el update 
+        where: {
+          tamanio_fechaDesde: {
+            tamanio: originalSize,
+            fechaDesde: fechaPrisma
+          }
+        },
+        data: {
+          tamanio: input.tamanio,
+          precioTamanio: input.precioTamanio,
+          precioByN: input.precioByN,
+          precioColor: input.precioColor,
+          factorGanancia: input.factorGanancia ?? 1,
+        },
+        select: { tamanio: true },
+      });
+      return true;
+    });
+  } catch (error) {
+    if (isPrismaError(error)) {
+      if (error.code === 'P2002') {
+        throw conflict('Ya existe un precio para ese tamaño y fecha.');
       }
-
-      const updated = (await result(
-        `UPDATE PreciosImpresiones
-         SET tamanio = ?, precioTamanio = ?, precioByN = ?, precioColor = ?, factorGanancia = ?
-         WHERE tamanio = ? AND fechaDesde = ?`,
-        [
-          input.tamanio,
-          input.precioTamanio,
-          input.precioByN,
-          input.precioColor,
-          input.factorGanancia ?? 1,
-          originalTamanio,
-          fechaDesde,
-        ],
-        connection,
-      )) as ResultSetHeader;
-
-      return updated.affectedRows > 0 || Boolean(current[0]);
-    }),
-  );
+      if (error.code === 'P2003') {
+        throw conflict('No se puede cambiar el tamaño: hay pedidos que usan este precio.');
+      }
+      if (error.code === 'P2025') return false;
+    }
+    throw error;
+  }
 }
