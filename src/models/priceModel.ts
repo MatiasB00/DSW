@@ -1,17 +1,16 @@
-import { Decimal } from '@prisma/client/runtime/client';
-import { prisma } from '../../lib/prisma'
-import { PrismaClientKnownRequestError } from '../../generated/prisma/internal/prismaNamespace';
 import { conflict } from '@hapi/boom';
+import { Prisma } from '../../generated/prisma/client';
+import { prisma } from '../../lib/prisma';
 
 
 export interface PrecioItem {
     IDProducto: number;
     fechaDesde: Date;
-    valor: Decimal;
+    valor: Prisma.Decimal;
 }
 
-export async function findAll(id: number) { //es un findAll, pero recibe ID xq busca todos los precios PARA UN PRODUCTO EN PARTICULAR
-    return await prisma.precio.findMany({
+export async function findAll(id: number) {
+    return prisma.precio.findMany({
         select: {
             IDProducto: true,
             fechaDesde: true,
@@ -26,8 +25,8 @@ export async function findAll(id: number) { //es un findAll, pero recibe ID xq b
     });
 }
 
-export async function create(id: number, value: number) {
-    try{ 
+export async function create(id: number, value: number): Promise<void> {
+    try {
         await prisma.precio.create({
             data: {
                 IDProducto: id,
@@ -37,17 +36,15 @@ export async function create(id: number, value: number) {
                 IDProducto: true
             }
         });
-    return;
-    } 
-    catch(error) {
-        if(error instanceof PrismaClientKnownRequestError){
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === 'P2003') {
-                throw conflict('El ID de producto no existe')
+                throw conflict('El ID de producto no existe.');
             }
             if (error.code === 'P2002') {
-                throw conflict('El precio ya existe')
+                throw conflict('El precio ya existe.');
             }
         }
-        throw error
+        throw error;
     }
 }

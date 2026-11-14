@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma'
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
+import { Prisma } from '../../generated/prisma/client';
 import { conflict } from '@hapi/boom';
 
 export interface CategoryInput {
@@ -43,7 +43,7 @@ export async function create(category: CategoryInput): Promise<number> {
     return created.IDCategoria;
 } 
     catch(error) {
-        if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
             throw conflict('Ya existe una categoria con ese nombre.')
         }
         throw error;
@@ -62,7 +62,7 @@ export async function update(id: number, category: CategoryInput) {
         });
     return true;
     } catch(error) {
-        if (error instanceof PrismaClientKnownRequestError) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === 'P2025') return false;
             if (error.code === 'P2002') {
                 throw conflict('Ya existe una categoría con ese nombre')
@@ -72,7 +72,7 @@ export async function update(id: number, category: CategoryInput) {
     }
 }
 
-export async function remove(id:number): Promise<Boolean>{
+export async function remove(id: number): Promise<boolean> {
     try {
         await prisma.categoria.delete({
             where: {
@@ -82,8 +82,11 @@ export async function remove(id:number): Promise<Boolean>{
     return true;
     }
     catch(error) {
-        if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-            return false;
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') return false;
+            if (error.code === 'P2003') {
+                throw conflict('No se puede eliminar una categoría asociada a productos.');
+            }
         }
         throw error;
     }

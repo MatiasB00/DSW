@@ -1,5 +1,5 @@
 import Hapi from '@hapi/hapi';
-import { closeDatabase } from './db';
+import { prisma } from '../lib/prisma';
 import { routes } from './routes';
 import { registerJwtAuth } from './auth/jwtAuth';
 
@@ -22,6 +22,6 @@ export async function createServer(): Promise<Hapi.Server> {
       );
     }
   });
-  server.ext('onPostStop', async () => closeDatabase());
+  server.ext('onPostStop', async () => prisma.$disconnect());
   return server;
 }

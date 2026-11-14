@@ -1,82 +1,105 @@
-import { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import { databaseOperation, result, rows, SqlValue } from '../db';
+import { conflict } from '@hapi/boom';
+import { Prisma } from '../../generated/prisma/client';
+import { prisma } from '../../lib/prisma';
 
 export interface providerInput {
-  cuit: string,
-  razonSocial: string,
-  email: string,
-  telefono?: string | null
-  direccion?: string | null
+  cuit: string;
+  razonSocial: string;
+  email: string;
+  telefono?: string | null;
+  direccion?: string | null;
 }
 
-
-export async function findAll(): Promise<RowDataPacket[]> {
-  return databaseOperation(() =>
-    rows('SELECT IDProveedor, cuit, razonSocial, email, telefono, direccion FROM Proveedor ORDER BY IDProveedor')
-  )
+function isPrismaError(
+  error: unknown,
+): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError;
 }
 
-export async function findOne(id: number): Promise<RowDataPacket | undefined> {
-  const found = await databaseOperation(() =>
-    rows<RowDataPacket>('SELECT IDProveedor, cuit, razonSocial, email, telefono, direccion FROM Proveedor WHERE IDProveedor = ?', [id])
-  );
-  return found[0]
-}
-
-export async function create(provider: providerInput): Promise<number> {
-  const values: SqlValue[] = [
-    provider.cuit,
-    provider.razonSocial,
-    provider.email,
-    provider.telefono ?? null,
-    provider.direccion ?? null
-  ];
-
-  return databaseOperation(async () => {
-    const inserted = (await result(
-      'INSERT INTO Proveedor (cuit, razonSocial, email, telefono, direccion) VALUES (?, ?, ?, ?, ?)', values
-    )) as ResultSetHeader;
-    return inserted.insertId;
+export async function findAll() {
+  return prisma.proveedor.findMany({
+    select: {
+      IDProveedor: true,
+      cuit: true,
+      razonSocial: true,
+      email: true,
+      telefono: true,
+      direccion: true,
+    },
+    orderBy: { IDProveedor: 'asc' },
   });
 }
 
+export async function findOne(id: number) {
+  return prisma.proveedor.findUnique({
+    select: {
+      IDProveedor: true,
+      cuit: true,
+      razonSocial: true,
+      email: true,
+      telefono: true,
+      direccion: true,
+    },
+    where: { IDProveedor: id },
+  });
+}
+
+export async function create(provider: providerInput): Promise<number> {
+  try {
+    const created = await prisma.proveedor.create({
+      data: {
+        cuit: provider.cuit,
+        razonSocial: provider.razonSocial,
+        email: provider.email,
+        telefono: provider.telefono ?? null,
+        direccion: provider.direccion ?? null,
+      },
+      select: { IDProveedor: true },
+    });
+    return created.IDProveedor;
+  } catch (error) {
+    if (isPrismaError(error) && error.code === 'P2002') {
+      throw conflict('Ya existe un proveedor con ese CUIT o email.');
+    }
+    throw error;
+  }
+}
+
 export async function update(id: number, provider: providerInput): Promise<boolean> {
-
-  const campos = ['cuit = ?', 'razonSocial = ?', 'email = ?']
-  const values: SqlValue[] = [
-    provider.cuit,
-    provider.razonSocial,
-    provider.email
-  ];
-
-  if (provider.telefono !== undefined) {
-    campos.push('telefono = ?')
-    values.push(provider.telefono)
+  try {
+    await prisma.proveedor.update({
+      where: { IDProveedor: id },
+      data: {
+        cuit: provider.cuit,
+        razonSocial: provider.razonSocial,
+        email: provider.email,
+        telefono: provider.telefono,
+        direccion: provider.direccion,
+      },
+    });
+    return true;
+  } catch (error) {
+    if (isPrismaError(error)) {
+      if (error.code === 'P2025') return false;
+      if (error.code === 'P2002') {
+        throw conflict('Ya existe un proveedor con ese CUIT o email.');
+      }
+    }
+    throw error;
   }
-
-  if (provider.direccion !== undefined) {
-    campos.push('direccion = ?')
-    values.push(provider.direccion)
-  }
-
-  return databaseOperation(async () => {
-    const updated = await result(
-      `UPDATE Proveedor SET ${campos.join(',')} WHERE IDProveedor = ?`,
-      [...values, id]
-    ) as ResultSetHeader;
-
-    if (updated.affectedRows > 0) return true;
-
-    return Boolean(await findOne(id)) // daria true si el update se hizo pero las filas eran iguales. false si no existe el provider
-  })
 }
 
 export async function remove(id: number): Promise<boolean> {
-  return databaseOperation(async () => {
-    const deleted = await result(
-      'DELETE FROM Proveedor WHERE IDProveedor = ?', [id]
-    ) as ResultSetHeader;
-
-    return deleted.affectedRows > 0;
-  })
+  try {
+    await prisma.proveedor.delete({ where: { IDProveedor: id } });
+    return true;
+  } catch (error) {
+    if (isPrismaError(error)) {
+      if (error.code === 'P2025') return false;
+      if (error.code === 'P2003') {
+        throw conflict('No se puede eliminar un proveedor asociado a productos.');
+      }
+    }
+    throw error;
+  }
 }

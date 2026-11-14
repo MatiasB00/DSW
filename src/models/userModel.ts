@@ -1,69 +1,100 @@
-import { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import { databaseOperation, result, rows, SqlValue } from '../db';
+import { conflict } from '@hapi/boom';
+import { Prisma } from '../../generated/prisma/client';
+import { prisma } from '../../lib/prisma';
 
 export interface userInput {
-  nombre: string,
-  apellido: string,
-  email: string,
-  contraseniaHash: string
+  nombre: string;
+  apellido: string;
+  email: string;
+  contraseniaHash: string;
 }
 
-
-export async function findAll(): Promise<RowDataPacket[]> {
-  return databaseOperation(() =>
-    rows('SELECT IDUsuario, nombre, apellido, email, rol FROM Usuario ORDER BY IDUsuario')
-  )
+function isPrismaError(
+  error: unknown,
+): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError;
 }
 
-export async function findOne(id: number): Promise<RowDataPacket | undefined> {
-  const found = await databaseOperation(() =>
-    rows<RowDataPacket>('SELECT IDUsuario, nombre, apellido, email, rol FROM Usuario WHERE IDUsuario = ?', [id])
-  );
-  return found[0]
-}
-
-export async function create(user: userInput): Promise<number> {
-  const values: SqlValue[] = [
-    user.nombre,
-    user.apellido,
-    user.email,
-    user.contraseniaHash
-  ];
-
-  return databaseOperation(async () => {
-    const inserted = (await result(
-      'INSERT INTO Usuario (nombre, apellido, email, contrasenia) VALUES (?, ?, ?, ?)', values
-    )) as ResultSetHeader;
-    return inserted.insertId;
+export async function findAll() {
+  return prisma.usuario.findMany({
+    select: {
+      IDUsuario: true,
+      nombre: true,
+      apellido: true,
+      email: true,
+      rol: true,
+    },
+    orderBy: { IDUsuario: 'asc' },
   });
 }
 
+export async function findOne(id: number) {
+  return prisma.usuario.findUnique({
+    select: {
+      IDUsuario: true,
+      nombre: true,
+      apellido: true,
+      email: true,
+      rol: true,
+    },
+    where: { IDUsuario: id },
+  });
+}
+
+export async function create(user: userInput): Promise<number> {
+  try {
+    const created = await prisma.usuario.create({
+      data: {
+        nombre: user.nombre,
+        apellido: user.apellido,
+        email: user.email,
+        contrasenia: user.contraseniaHash,
+      },
+      select: { IDUsuario: true },
+    });
+    return created.IDUsuario;
+  } catch (error) {
+    if (isPrismaError(error) && error.code === 'P2002') {
+      throw conflict('Ya existe un usuario con ese email.');
+    }
+    throw error;
+  }
+}
+
 export async function update(id: number, user: userInput): Promise<boolean> {
-  const values: SqlValue[] = [
-    user.nombre,
-    user.apellido,
-    user.email,
-    user.contraseniaHash
-  ];
-
-  return databaseOperation(async ()=> {
-    const updated = await result(
-      'UPDATE Usuario SET nombre = ?, apellido = ?, email = ?, contrasenia = ? WHERE IDUsuario = ?',
-      [...values, id]
-    ) as ResultSetHeader;
-    
-    if (updated.affectedRows > 0) return true;
-
-    return Boolean(await findOne(id)) // daria true si el update se hizo pero las filas eran iguales. false si no existe el user
-  })
+  try {
+    await prisma.usuario.update({
+      where: { IDUsuario: id },
+      data: {
+        nombre: user.nombre,
+        apellido: user.apellido,
+        email: user.email,
+        contrasenia: user.contraseniaHash,
+      },
+    });
+    return true;
+  } catch (error) {
+    if (isPrismaError(error)) {
+      if (error.code === 'P2025') return false;
+      if (error.code === 'P2002') {
+        throw conflict('Ya existe un usuario con ese email.');
+      }
+    }
+    throw error;
+  }
 }
 
 export async function remove(id: number): Promise<boolean> {
-  return databaseOperation(async () => {
-    const deleted = await result(
-      'DELETE FROM usuario WHERE IDUsuario = ?', [id]
-    ) as ResultSetHeader;
-
-    return deleted.affectedRows > 0;
-  })
+  try {
+    await prisma.usuario.delete({ where: { IDUsuario: id } });
+    return true;
+  } catch (error) {
+    if (isPrismaError(error)) {
+      if (error.code === 'P2025') return false;
+      if (error.code === 'P2003') {
+        throw conflict('No se puede eliminar un usuario que tiene pedidos.');
+      }
+    }
+    throw error;
+  }
 }

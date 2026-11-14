@@ -1,70 +1,74 @@
-import bycript from 'bcryptjs';
-import { RowDataPacket } from 'mysql2/promise';
-import { databaseOperation, rows } from '../db';
-import * as userModel from '../models/userModel'
-
-export interface UsuarioRow extends RowDataPacket {
-    IDUsuario: number;
-    nombre: string;
-    apellido: string;
-    email: string;
-    contrasenia: string;
-    rol: string;
-}
-
-export interface AuthIdentity extends RowDataPacket {
-    IDUsuario: number;
-    nombre: string;
-    apellido: string;
-    email: string;
-    rol: string;
-}
-
+import { conflict } from '@hapi/boom';
+import bcrypt from 'bcryptjs';
+import { Prisma } from '../../generated/prisma/client';
+import { prisma } from '../../lib/prisma';
+import * as userModel from '../models/userModel';
 
 export interface UsuarioRegistroInput {
-    nombre: string;
-    apellido: string;
-    email: string;
-    contrasenia: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  contrasenia: string;
 }
 
-export async function findByEmail(email: string): Promise<UsuarioRow | null> {
-    return databaseOperation(async () => {
-        const listado = await rows<UsuarioRow>(
-            'SELECT IDUsuario, nombre, apellido, email, contrasenia, rol  FROM Usuario WHERE email = ?',
-            [email]
-        );
-        return listado.length > 0 ? listado[0] : null;
-    })
+function isPrismaError(
+  error: unknown,
+): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError;
 }
 
-export async function findById(id: number): Promise<AuthIdentity | null> {
-    const found = await databaseOperation(() => 
-        rows<AuthIdentity>(
-            'SELECT IDUsuario, nombre, apellido, email, rol FROM Usuario WHERE IDUsuario = ?',
-            [id]
-        )
-    );
-    return found[0] ?? null;
+export async function findByEmail(email: string) {
+  return prisma.usuario.findUnique({
+    where: { email },
+    select: {
+      IDUsuario: true,
+      nombre: true,
+      apellido: true,
+      email: true,
+      contrasenia: true,
+      rol: true,
+    },
+  });
+}
+
+export async function findById(id: number) {
+  return prisma.usuario.findUnique({
+    where: { IDUsuario: id },
+    select: {
+      IDUsuario: true,
+      nombre: true,
+      apellido: true,
+      email: true,
+      rol: true,
+    },
+  });
 }
 
 export async function create(datos: UsuarioRegistroInput) {
-    return databaseOperation(async () => {
-        const contraseniaHash = await bycript.hash(datos.contrasenia, 10);
+  const contraseniaHash = await bcrypt.hash(datos.contrasenia, 10);
 
-        const IDUsuario = await userModel.create({
-            nombre: datos.nombre,
-            apellido: datos.apellido,
-            email: datos.email,
-            contraseniaHash 
-        })
+  try {
+    const IDUsuario = await userModel.create({
+      nombre: datos.nombre,
+      apellido: datos.apellido,
+      email: datos.email,
+      contraseniaHash,
+    });
 
-        return {
-            IDUsuario,
-            nombre: datos.nombre,
-            apellido: datos.apellido,
-            email: datos.email,
-            rol: 'cliente'
-        };
-    })
+    return prisma.usuario.findUniqueOrThrow({
+      where: { IDUsuario },
+      select: {
+        IDUsuario: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        rol: true,
+      },
+    });
+  } catch (error) {
+    if (isPrismaError(error) && error.code === 'P2002') {
+      throw conflict('El email ya está registrado.');
+    }
+    throw error;
+  }
 }
