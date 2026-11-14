@@ -11,6 +11,18 @@ export interface productInput {
   IDCategoria?: number | null;
 }
 
+interface RawProductQueryRow {
+  IDProducto: number | bigint;
+  nombre: string;
+  descripcion: string;
+  stock: number | bigint;
+  IDProveedor: number | bigint | null;
+  IDCategoria: number | bigint | null;
+  categoria: string | null;
+  proveedorNombre: string | null;
+  precio: Prisma.Decimal | number | bigint;
+}
+
 interface ProductQueryRow {
   IDProducto: number;
   nombre: string;
@@ -23,8 +35,19 @@ interface ProductQueryRow {
   precio: Prisma.Decimal | number;
 }
 
+function toProductQueryRow(row: RawProductQueryRow): ProductQueryRow {
+  return {
+    ...row,
+    IDProducto: Number(row.IDProducto),
+    stock: Number(row.stock),
+    IDProveedor: row.IDProveedor === null ? null : Number(row.IDProveedor),
+    IDCategoria: row.IDCategoria === null ? null : Number(row.IDCategoria),
+    precio: typeof row.precio === 'bigint' ? Number(row.precio) : row.precio,
+  };
+}
+
 export async function findAll(): Promise<ProductQueryRow[]> {
-  return prisma.$queryRaw<ProductQueryRow[]>`
+  const rows = await prisma.$queryRaw<RawProductQueryRow[]>`
       SELECT p.IDProducto, p.nombre, p.descripcion, p.stock, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
     COALESCE((
       SELECT prec.valor
@@ -38,10 +61,11 @@ export async function findAll(): Promise<ProductQueryRow[]> {
     LEFT JOIN Categoria c ON p.IDCategoria = c.IDCategoria 
     ORDER BY p.IDProducto
   `;
+  return rows.map(toProductQueryRow);
 }
 
 export async function findOne(id: number): Promise<ProductQueryRow | undefined> {
-  const found = await prisma.$queryRaw<ProductQueryRow[]>`
+  const found = await prisma.$queryRaw<RawProductQueryRow[]>`
       SELECT p.IDProducto, p.nombre, p.descripcion, p.stock, p.IDProveedor, c.IDCategoria, c.nombre AS categoria, pr.razonSocial AS proveedorNombre,
       COALESCE((
         SELECT prec.valor
@@ -55,7 +79,7 @@ export async function findOne(id: number): Promise<ProductQueryRow | undefined> 
       LEFT JOIN Categoria c ON p.IDCategoria = c.IDCategoria
       WHERE p.IDProducto = ${id}  
   `
-  return found[0]
+  return found[0] ? toProductQueryRow(found[0]) : undefined;
 }
 
 export async function create(product: productInput): Promise<number> {
