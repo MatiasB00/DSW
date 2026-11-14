@@ -65,6 +65,42 @@ export async function create(provider: providerInput): Promise<number> {
   }
 }
 
+export async function update(id:number, provider: providerInput): Promise<boolean> {
+  const data: any = []
+  try {
+    if (provider.cuit !== undefined) {
+      data.cuit = provider.cuit
+    }
+    if (provider.razonSocial !== undefined) {
+      data.razonSocial = provider.razonSocial
+    }
+    if (provider.email !== undefined) {
+      data.email = provider.email
+    }
+    if (provider.telefono !== undefined) {
+      data.telefono = provider.telefono
+    } else {
+      data.telefono = null
+    }
+    if (provider.direccion !== undefined) {
+      data.direccion = provider.direccion
+    } else {
+      data.direccion = null
+    }
+    const updated = await prisma.proveedor.update({
+      where: {
+        IDProveedor : id
+      },
+      data
+    });
+    return true; 
+  }
+  catch(error) {
+        if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025')return false;
+        throw error;
+  }
+}
+/* 
 export async function update(id: number, provider: providerInput): Promise<boolean> {
   try {
     await prisma.proveedor.update({
@@ -87,7 +123,7 @@ export async function update(id: number, provider: providerInput): Promise<boole
     }
     throw error;
   }
-}
+} */
 
 export async function remove(id: number): Promise<boolean> {
   try {
