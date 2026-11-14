@@ -1,0 +1,143 @@
+-- CreateTable
+CREATE TABLE `categoria` (
+    `IDCategoria` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+    `nombre` VARCHAR(30) NOT NULL,
+
+    UNIQUE INDEX `nombre`(`nombre`),
+    PRIMARY KEY (`IDCategoria`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `pedido` (
+    `IDPedido` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+    `fecha` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `estado` VARCHAR(30) NOT NULL,
+    `total` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+    `IDUsuario` INTEGER UNSIGNED NOT NULL,
+
+    INDEX `idx_pedido_usuario`(`IDUsuario`),
+    PRIMARY KEY (`IDPedido`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `pedidoimpresion` (
+    `IDPedido` INTEGER UNSIGNED NOT NULL,
+    `cantCopias` INTEGER UNSIGNED NOT NULL,
+    `faz` ENUM('simple', 'doble') NOT NULL,
+    `tamanio` VARCHAR(30) NOT NULL,
+    `tipoColor` ENUM('blanco y negro', 'color') NOT NULL,
+    `fechaPrecioDesde` DATETIME(0) NOT NULL,
+    `observacion` TEXT NULL,
+    `subtotal` DECIMAL(12, 2) NOT NULL,
+
+    INDEX `fk_pedidoimpresion_precio`(`tamanio`, `fechaPrecioDesde`),
+    PRIMARY KEY (`IDPedido`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `pedidoinsumo` (
+    `IDPedido` INTEGER UNSIGNED NOT NULL,
+
+    PRIMARY KEY (`IDPedido`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `precio` (
+    `IDProducto` INTEGER UNSIGNED NOT NULL,
+    `fechaDesde` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `valor` DECIMAL(12, 2) NOT NULL,
+
+    PRIMARY KEY (`IDProducto`, `fechaDesde`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `preciosimpresiones` (
+    `fechaDesde` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `tamanio` VARCHAR(30) NOT NULL,
+    `precioTamanio` DECIMAL(12, 2) NOT NULL,
+    `precioByN` DECIMAL(12, 2) NOT NULL,
+    `precioColor` DECIMAL(12, 2) NOT NULL,
+    `factorGanancia` DECIMAL(4, 2) NOT NULL DEFAULT 1.00,
+
+    PRIMARY KEY (`tamanio`, `fechaDesde`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `prodped` (
+    `IDPedido` INTEGER UNSIGNED NOT NULL,
+    `IDProducto` INTEGER UNSIGNED NOT NULL,
+    `cantidad` INTEGER UNSIGNED NOT NULL,
+    `subtotal` DECIMAL(12, 2) NOT NULL,
+
+    INDEX `idx_prodped_producto`(`IDProducto`),
+    PRIMARY KEY (`IDPedido`, `IDProducto`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `producto` (
+    `IDProducto` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+    `nombre` VARCHAR(150) NOT NULL,
+    `descripcion` TEXT NOT NULL,
+    `stock` INTEGER UNSIGNED NOT NULL DEFAULT 0,
+    `IDProveedor` INTEGER UNSIGNED NULL,
+    `IDCategoria` INTEGER UNSIGNED NULL,
+
+    INDEX `idx_producto_categoria`(`IDCategoria`),
+    INDEX `idx_producto_proveedor`(`IDProveedor`),
+    PRIMARY KEY (`IDProducto`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `proveedor` (
+    `IDProveedor` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+    `cuit` VARCHAR(20) NOT NULL,
+    `razonSocial` VARCHAR(150) NOT NULL,
+    `email` VARCHAR(254) NOT NULL,
+    `telefono` VARCHAR(50) NULL,
+    `direccion` VARCHAR(255) NULL,
+
+    UNIQUE INDEX `uq_proveedor_cuit`(`cuit`),
+    UNIQUE INDEX `uq_proveedor_email`(`email`),
+    PRIMARY KEY (`IDProveedor`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `usuario` (
+    `IDUsuario` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+    `nombre` VARCHAR(100) NOT NULL,
+    `apellido` VARCHAR(100) NOT NULL,
+    `email` VARCHAR(254) NOT NULL,
+    `contrasenia` VARCHAR(255) NOT NULL,
+    `rol` VARCHAR(30) NOT NULL DEFAULT 'cliente',
+
+    UNIQUE INDEX `uq_usuario_email`(`email`),
+    PRIMARY KEY (`IDUsuario`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `pedido` ADD CONSTRAINT `fk_pedido_usuario` FOREIGN KEY (`IDUsuario`) REFERENCES `usuario`(`IDUsuario`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `pedidoimpresion` ADD CONSTRAINT `fk_pedidoimpresion_pedido` FOREIGN KEY (`IDPedido`) REFERENCES `pedido`(`IDPedido`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `pedidoimpresion` ADD CONSTRAINT `fk_pedidoimpresion_precio` FOREIGN KEY (`tamanio`, `fechaPrecioDesde`) REFERENCES `preciosimpresiones`(`tamanio`, `fechaDesde`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+-- AddForeignKey
+ALTER TABLE `pedidoinsumo` ADD CONSTRAINT `fk_pedidoinsumo_pedido` FOREIGN KEY (`IDPedido`) REFERENCES `pedido`(`IDPedido`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `precio` ADD CONSTRAINT `fk_precio_producto` FOREIGN KEY (`IDProducto`) REFERENCES `producto`(`IDProducto`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `prodped` ADD CONSTRAINT `fk_prodped_pedidoinsumo` FOREIGN KEY (`IDPedido`) REFERENCES `pedidoinsumo`(`IDPedido`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `prodped` ADD CONSTRAINT `fk_prodped_producto` FOREIGN KEY (`IDProducto`) REFERENCES `producto`(`IDProducto`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `producto` ADD CONSTRAINT `fk_producto_categoria` FOREIGN KEY (`IDCategoria`) REFERENCES `categoria`(`IDCategoria`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `producto` ADD CONSTRAINT `fk_producto_proveedor` FOREIGN KEY (`IDProveedor`) REFERENCES `proveedor`(`IDProveedor`) ON DELETE SET NULL ON UPDATE CASCADE;
+

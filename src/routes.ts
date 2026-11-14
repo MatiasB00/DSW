@@ -67,26 +67,7 @@ const printingPriceCreateSchema = Joi.object(printingPriceFields).unknown(false)
 const printingPriceUpdateSchema = Joi.object(printingPriceFields).unknown(false);
 const printingPriceParams = Joi.object({
   tamanio: Joi.string().trim().valid(...PRINTING_SIZES).required(),
-  fechaDesde: Joi.string()
-    .pattern(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
-    .custom((value, helpers) => {
-      const [date, time] = value.split(' ');
-      const [year, month, day] = date.split('-').map(Number);
-      const [hour, minute, second] = time.split(':').map(Number);
-      const parsed = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-      if (
-        parsed.getUTCFullYear() !== year ||
-        parsed.getUTCMonth() !== month - 1 ||
-        parsed.getUTCDate() !== day ||
-        hour > 23 ||
-        minute > 59 ||
-        second > 59
-      ) {
-        return helpers.error('date.base');
-      }
-      return value;
-    })
-    .required(),
+  fechaDesde: Joi.string().isoDate().required(),
 });
 
 const orderFields = {
