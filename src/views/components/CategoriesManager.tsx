@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/apiFetch';
-import './CategoriasManager.css';
+import './CategoriesManager.css';
 
-export interface Categoria {
+export interface Category {
     IDCategoria: number;
     nombre: string;
 }
 
-interface CategoriaManagerProps {
-    onCategoriasChange?: () => void;
+interface CategoriesManagerProps {
+    onCategoriesChange?: () => void;
 }
 
-export function CategoriasManager({ onCategoriasChange }: CategoriaManagerProps) {
-    const [categorias, setCategorias] = useState<Categoria[]>([]);
-    const [nombre, setNombre] = useState('');
-    const [categoriaAEditar, setCategoriaAEditar] = useState<Categoria | null>(null);
-    const [cargando, setCargando] = useState(false);
-    const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
+export function CategoriesManager({ onCategoriesChange }: CategoriesManagerProps) {
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [name, setName] = useState('');
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-    const cargarCategorias = async () => {
+    const loadCategories = async () => {
         try {
             const res = await apiFetch('/api/categorias');
             if (res.ok) {
                 const data = await res.json();
-                setCategorias(data);
+                setCategories(data);
             }
         } catch (error) {
             console.error('Error al cargar categorías:', error);
@@ -31,72 +31,72 @@ export function CategoriasManager({ onCategoriasChange }: CategoriaManagerProps)
     };
 
     useEffect(() => {
-        cargarCategorias();
+        loadCategories();
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setMensaje(null);
+        setMessage(null);
 
-        const nombreLimpio = nombre.trim();
-        if (!nombreLimpio) return;
+        const trimmedName = name.trim();
+        if (!trimmedName) return;
 
-        setCargando(true);
-        const esEdicion = Boolean(categoriaAEditar);
-        const url = esEdicion ? `/api/categorias/${categoriaAEditar!.IDCategoria}` : '/api/categorias';
-        const method = esEdicion ? 'PUT' : 'POST';
+        setLoading(true);
+        const isEditing = Boolean(editingCategory);
+        const url = isEditing ? `/api/categorias/${editingCategory!.IDCategoria}` : '/api/categorias';
+        const method = isEditing ? 'PUT' : 'POST';
 
         try {
             const res = await apiFetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre: nombreLimpio }),
+                body: JSON.stringify({ nombre: trimmedName }),
             });
 
             if (!res.ok) {
-                throw new Error(esEdicion ? 'No se pudo actualizar la categoría.' : 'Error al crear la categoría.');
+                throw new Error(isEditing ? 'No se pudo actualizar la categoría.' : 'Error al crear la categoría.');
             }
 
-            setMensaje({
-                tipo: 'exito',
-                texto: esEdicion ? '¡Categoría actualizada con éxito!' : '¡Categoría creada con éxito!'
+            setMessage({
+                type: 'success',
+                text: isEditing ? '¡Categoría actualizada con éxito!' : '¡Categoría creada con éxito!'
             });
-            setNombre('');
-            setCategoriaAEditar(null);
-            cargarCategorias();
-            if (onCategoriasChange) onCategoriasChange();
+            setName('');
+            setEditingCategory(null);
+            loadCategories();
+            if (onCategoriesChange) onCategoriesChange();
         } catch (err: any) {
-            setMensaje({ tipo: 'error', texto: err.message || 'Error al procesar la categoría.' });
+            setMessage({ type: 'error', text: err.message || 'Error al procesar la categoría.' });
         } finally {
-            setCargando(false);
+            setLoading(false);
         }
     };
 
-    const handleIniciarEdicion = (cat: Categoria) => {
-        setCategoriaAEditar(cat);
-        setNombre(cat.nombre);
-        setMensaje(null);
+    const handleStartEdit = (cat: Category) => {
+        setEditingCategory(cat);
+        setName(cat.nombre);
+        setMessage(null);
     };
 
-    const handleCancelarEdicion = () => {
-        setCategoriaAEditar(null);
-        setNombre('');
-        setMensaje(null);
+    const handleCancelEdit = () => {
+        setEditingCategory(null);
+        setName('');
+        setMessage(null);
     };
 
-    const handleEliminar = async (id: number, nombreCat: string) => {
-        const confirmar = window.confirm(`¿Estás seguro de que deseas eliminar la categoría "${nombreCat}"? Los productos que la tengan pasarán a no tener categoría.`);
-        if (!confirmar) return;
+    const handleDelete = async (id: number, categoryName: string) => {
+        const confirmed = window.confirm(`¿Estás seguro de que deseas eliminar la categoría "${categoryName}"? Los productos que la tengan pasarán a no tener categoría.`);
+        if (!confirmed) return;
 
         try {
             const res = await apiFetch(`/api/categorias/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('No se pudo eliminar la categoría.');
 
-            if (categoriaAEditar?.IDCategoria === id) {
-                handleCancelarEdicion();
+            if (editingCategory?.IDCategoria === id) {
+                handleCancelEdit();
             }
-            cargarCategorias();
-            if (onCategoriasChange) onCategoriasChange();
+            loadCategories();
+            if (onCategoriesChange) onCategoriesChange();
         } catch (err: any) {
             alert(err.message || 'Error al eliminar.');
         }
@@ -113,13 +113,13 @@ export function CategoriasManager({ onCategoriasChange }: CategoriaManagerProps)
                 </div>
             </header>
 
-            {mensaje && (
-                <div className={`category-feedback category-feedback-${mensaje.tipo}`}>
-                    <span>{mensaje.texto}</span>
+            {message && (
+                <div className={`category-feedback category-feedback-${message.type}`}>
+                    <span>{message.text}</span>
                     <button
                         type="button"
                         className="category-close-alert"
-                        onClick={() => setMensaje(null)}
+                        onClick={() => setMessage(null)}
                         aria-label="Cerrar notificación"
                     >
                         &times;
@@ -132,20 +132,20 @@ export function CategoriasManager({ onCategoriasChange }: CategoriaManagerProps)
                     type="text"
                     className="category-input"
                     placeholder="Ej: Papelería, Tintas, Vinilos..."
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     maxLength={30}
                     required
                 />
-                <button type="submit" className="btn-category-submit" disabled={cargando}>
-                    {cargando ? 'Guardando...' : categoriaAEditar ? 'Guardar Cambios' : '+ Agregar Categoría'}
+                <button type="submit" className="btn-category-submit" disabled={loading}>
+                    {loading ? 'Guardando...' : editingCategory ? 'Guardar Cambios' : '+ Agregar Categoría'}
                 </button>
-                {categoriaAEditar && (
+                {editingCategory && (
                     <button
                         type="button"
                         className="btn-category-cancel"
-                        onClick={handleCancelarEdicion}
-                        disabled={cargando}
+                        onClick={handleCancelEdit}
+                        disabled={loading}
                     >
                         Cancelar
                     </button>
@@ -153,22 +153,22 @@ export function CategoriasManager({ onCategoriasChange }: CategoriaManagerProps)
             </form>
 
             <div className="category-list-container">
-                <span className="category-list-label">Categorías existentes ({categorias.length}):</span>
-                {categorias.length === 0 ? (
+                <span className="category-list-label">Categorías existentes ({categories.length}):</span>
+                {categories.length === 0 ? (
                     <p className="category-empty-text">No hay categorías creadas todavía.</p>
                 ) : (
                     <div className="category-chips-grid">
-                        {categorias.map((cat) => (
+                        {categories.map((cat) => (
                             <div
                                 key={cat.IDCategoria}
-                                className={`category-chip ${categoriaAEditar?.IDCategoria === cat.IDCategoria ? 'category-chip-active' : ''}`}
+                                className={`category-chip ${editingCategory?.IDCategoria === cat.IDCategoria ? 'category-chip-active' : ''}`}
                             >
                                 <span className="category-chip-name">{cat.nombre}</span>
                                 <div className="category-chip-actions">
                                     <button
                                         type="button"
                                         className="btn-chip-action btn-chip-edit"
-                                        onClick={() => handleIniciarEdicion(cat)}
+                                        onClick={() => handleStartEdit(cat)}
                                         title="Editar nombre"
                                     >
                                         Editar
@@ -176,7 +176,7 @@ export function CategoriasManager({ onCategoriasChange }: CategoriaManagerProps)
                                     <button
                                         type="button"
                                         className="btn-chip-action btn-chip-delete"
-                                        onClick={() => handleEliminar(cat.IDCategoria, cat.nombre)}
+                                        onClick={() => handleDelete(cat.IDCategoria, cat.nombre)}
                                         title="Eliminar categoría"
                                     >
                                         &times;

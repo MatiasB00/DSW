@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/apiFetch';
-import './ProveedoresForm.css';
+import './ProvidersForm.css';
 
-export interface Proveedor {
+export interface Provider {
     IDProveedor: number;
     cuit: string;
     razonSocial: string;
@@ -11,29 +11,29 @@ export interface Proveedor {
     direccion?: string;
 }
 
-interface ProveedoresFormProps {
-    proveedorAEditar: Proveedor | null;
-    onGuardarExito: () => void;
-    onCancelarEdicion: () => void;
+interface ProvidersFormProps {
+    providerToEdit: Provider | null;
+    onSaveSuccess: () => void;
+    onCancelEdit: () => void;
 }
 
-export function ProveedoresForm({ proveedorAEditar, onGuardarExito, onCancelarEdicion }: ProveedoresFormProps) {
+export function ProvidersForm({ providerToEdit, onSaveSuccess, onCancelEdit }: ProvidersFormProps) {
     const [cuit, setCuit] = useState('');
     const [razonSocial, setRazonSocial] = useState('');
     const [email, setEmail] = useState('');
     const [telefono, setTelefono] = useState('');
     const [direccion, setDireccion] = useState('');
-    const [cargando, setCargando] = useState(false);
-    const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     useEffect(() => {
-        if (proveedorAEditar) {
-            setCuit(proveedorAEditar.cuit);
-            setRazonSocial(proveedorAEditar.razonSocial);
-            setEmail(proveedorAEditar.email);
-            setTelefono(proveedorAEditar.telefono || '');
-            setDireccion(proveedorAEditar.direccion || '');
-            setMensaje(null);
+        if (providerToEdit) {
+            setCuit(providerToEdit.cuit);
+            setRazonSocial(providerToEdit.razonSocial);
+            setEmail(providerToEdit.email);
+            setTelefono(providerToEdit.telefono || '');
+            setDireccion(providerToEdit.direccion || '');
+            setMessage(null);
         } else {
             setCuit('');
             setRazonSocial('');
@@ -41,16 +41,16 @@ export function ProveedoresForm({ proveedorAEditar, onGuardarExito, onCancelarEd
             setTelefono('');
             setDireccion('');
         }
-    }, [proveedorAEditar]);
+    }, [providerToEdit]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setMensaje(null);
-        setCargando(true);
+        setMessage(null);
+        setLoading(true);
 
-        const esEdicion = Boolean(proveedorAEditar);
-        const url = esEdicion ? `/api/proveedores/${proveedorAEditar!.IDProveedor}` : '/api/proveedores';
-        const method = esEdicion ? 'PUT' : 'POST';
+        const isEditing = Boolean(providerToEdit);
+        const url = isEditing ? `/api/proveedores/${providerToEdit!.IDProveedor}` : '/api/proveedores';
+        const method = isEditing ? 'PUT' : 'POST';
 
         try {
             const response = await apiFetch(url, {
@@ -70,12 +70,12 @@ export function ProveedoresForm({ proveedorAEditar, onGuardarExito, onCancelarEd
                 throw new Error(errorData.message || 'Error al procesar la solicitud.');
             }
 
-            setMensaje({
-                tipo: 'exito',
-                texto: esEdicion ? '¡Proveedor actualizado con éxito!' : '¡Proveedor creado exitosamente!',
+            setMessage({
+                type: 'success',
+                text: isEditing ? '¡Proveedor actualizado con éxito!' : '¡Proveedor creado exitosamente!',
             });
 
-            if (!esEdicion) {
+            if (!isEditing) {
                 setCuit('');
                 setRazonSocial('');
                 setEmail('');
@@ -83,14 +83,14 @@ export function ProveedoresForm({ proveedorAEditar, onGuardarExito, onCancelarEd
                 setDireccion('');
             }
 
-            onGuardarExito();
+            onSaveSuccess();
         } catch (error: any) {
-            setMensaje({
-                tipo: 'error',
-                texto: error.message || 'Ocurrió un error inesperado.',
+            setMessage({
+                type: 'error',
+                text: error.message || 'Ocurrió un error inesperado.',
             });
         } finally {
-            setCargando(false);
+            setLoading(false);
         }
     };
 
@@ -98,19 +98,19 @@ export function ProveedoresForm({ proveedorAEditar, onGuardarExito, onCancelarEd
         <article className="supplier-card-form">
             <header className="supplier-form-header">
                 <h3 className="supplier-form-title">
-                    {proveedorAEditar ? 'Editar Proveedor' : 'Registrar Nuevo Proveedor'}
+                    {providerToEdit ? 'Editar Proveedor' : 'Registrar Nuevo Proveedor'}
                 </h3>
                 <p className="supplier-form-subtitle">
-                    {proveedorAEditar
-                        ? `Modificando los datos del proveedor ${proveedorAEditar.razonSocial}`
+                    {providerToEdit
+                        ? `Modificando los datos del proveedor ${providerToEdit.razonSocial}`
                         : 'Completa los datos de la empresa proveedora'}
                 </p>
             </header>
 
-            {mensaje && (
-                <div className={`form-feedback-alert feedback-${mensaje.tipo}`}>
-                    {mensaje.texto}
-                    <button className="close-alert-btn" type="button" onClick={() => setMensaje(null)} aria-label='Cerrar notificacion'>
+            {message && (
+                <div className={`form-feedback-alert feedback-${message.type}`}>
+                    {message.text}
+                    <button className="close-alert-btn" type="button" onClick={() => setMessage(null)} aria-label='Cerrar notificacion'>
                         X
                     </button>
                 </div>
@@ -181,18 +181,18 @@ export function ProveedoresForm({ proveedorAEditar, onGuardarExito, onCancelarEd
                 </div>
 
                 <div className="form-actions-bar full-width">
-                    {proveedorAEditar && (
+                    {providerToEdit && (
                         <button
                             type="button"
                             className="btn-cancel-action"
-                            onClick={onCancelarEdicion}
-                            disabled={cargando}
+                            onClick={onCancelEdit}
+                            disabled={loading}
                         >
                             Cancelar
                         </button>
                     )}
-                    <button type="submit" className="btn-save-submit" disabled={cargando}>
-                        {cargando ? 'Guardando...' : proveedorAEditar ? 'Guardar Cambios' : 'Registrar Proveedor'}
+                    <button type="submit" className="btn-save-submit" disabled={loading}>
+                        {loading ? 'Guardando...' : providerToEdit ? 'Guardar Cambios' : 'Registrar Proveedor'}
                     </button>
                 </div>
             </form>

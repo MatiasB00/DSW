@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react';
-import { ProductoItem } from '../pages/Productos';
-import './ProductoModal.css';
+import { ProductItem } from '../pages/Products';
+import './ProductModal.css';
 
-interface ProductoModalProps {
-    producto: ProductoItem | null;
+interface ProductModalProps {
+    product: ProductItem | null;
     onClose: () => void;
-    onAgregar: (prod: ProductoItem) => void;
-    agregadoId: number | null;
+    onAdd: (product: ProductItem) => void;
+    addedId: number | null;
 }
 
-export function ProductoModal({ producto, onClose, onAgregar, agregadoId }: ProductoModalProps) {
+export function ProductModal({ product, onClose, onAdd, addedId }: ProductModalProps) {
     useEffect(() => {
-        if (!producto) return;
+        if (!product) return;
 
         document.body.classList.add('modal-open');
 
@@ -24,18 +24,18 @@ export function ProductoModal({ producto, onClose, onAgregar, agregadoId }: Prod
             document.body.classList.remove('modal-open');
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [producto, onClose]);
+    }, [product, onClose]);
 
-    if (!producto) return null;
+    if (!product) return null;
 
-    const estaAgregado = agregadoId === producto.IDProducto;
+    const isAdded = addedId === product.IDProducto;
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content product-modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <div>
-                        <h2 className="modal-title">{producto.nombre}</h2>
+                        <h2 className="modal-title">{product.nombre}</h2>
                     </div>
                     <button
                         type="button"
@@ -49,10 +49,10 @@ export function ProductoModal({ producto, onClose, onAgregar, agregadoId }: Prod
 
                 <div className="modal-body product-modal-body">
                     <div className="product-modal-img-container">
-                        {producto.imagenes?.[0]?.url ? (
+                        {product.imagenes?.[0]?.url ? (
                             <img
-                                src={producto.imagenes[0].url}
-                                alt={producto.nombre}
+                                src={product.imagenes[0].url}
+                                alt={product.nombre}
                                 className="product-modal-img"
                             />
                         ) : (
@@ -69,13 +69,13 @@ export function ProductoModal({ producto, onClose, onAgregar, agregadoId }: Prod
 
                     <div className="product-modal-info">
                         <p className="product-modal-desc">
-                            {producto.descripcion || 'Sin descripción detallada para este insumo.'}
+                            {product.descripcion || 'Sin descripción detallada para este insumo.'}
                         </p>
 
                         <div className="product-modal-price">
                             <span className="product-modal-price-label">Precio:</span>
                             <span className="product-modal-price-val">
-                                ${Number(producto.precio).toLocaleString('es-AR', {
+                                ${Number(product.precio).toLocaleString('es-AR', {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                 })}
@@ -90,10 +90,10 @@ export function ProductoModal({ producto, onClose, onAgregar, agregadoId }: Prod
                     </button>
                     <button
                         type="button"
-                        className={`btn-add-order ${estaAgregado ? 'btn-added' : ''}`}
-                        onClick={() => onAgregar(producto)}
+                        className={`btn-add-order ${isAdded ? 'btn-added' : ''}`}
+                        onClick={() => onAdd(product)}
                     >
-                        {estaAgregado ? '¡Agregado!' : 'Agregar al Carrito'}
+                        {isAdded ? '¡Agregado!' : 'Agregar al Carrito'}
                     </button>
                 </div>
             </div>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/apiFetch';
-import './Adminpedidos.css';
+import './AdminOrders.css';
 
-interface PedidoItemDetalle {
+export interface OrderItemDetail {
     IDProducto: number;
     nombre: string;
     cantidad: number;
@@ -10,7 +10,7 @@ interface PedidoItemDetalle {
     subtotal: number | string;
 }
 
-interface PedidoAdmin {
+export interface AdminOrder {
     IDPedido: number;
     fecha: string;
     estado: string;
@@ -20,7 +20,7 @@ interface PedidoAdmin {
     usuarioApellido?: string;
     usuarioEmail?: string;
     tipo: 'insumo' | 'impresion';
-    items?: PedidoItemDetalle[];
+    items?: OrderItemDetail[];
     cantCopias?: number;
     faz?: string;
     tamanio?: string;
@@ -30,51 +30,51 @@ interface PedidoAdmin {
     impresionSubtotal?: number | string;
 }
 
-interface AdminPedidosProps {
+interface AdminOrdersProps {
     onCountChange?: (count: number) => void;
 }
 
-export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
-    const [pedidos, setPedidos] = useState<PedidoAdmin[]>([]);
-    const [cargandoPedidos, setCargandoPedidos] = useState(true);
-    const [busquedaPedido, setBusquedaPedido] = useState('');
-    const [filtroEstado, setFiltroEstado] = useState<string>('todos');
-    const [pedidoAbiertoId, setPedidoAbiertoId] = useState<number | null>(null);
-    const [detallesCargados, setDetallesCargados] = useState<Record<number, any>>({});
-    const [cargandoDetalleId, setCargandoDetalleId] = useState<number | null>(null);
-    const [actualizandoEstadoId, setActualizandoEstadoId] = useState<number | null>(null);
-    const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+export function AdminOrders({ onCountChange }: AdminOrdersProps) {
+    const [orders, setOrders] = useState<AdminOrder[]>([]);
+    const [loadingOrders, setLoadingOrders] = useState(true);
+    const [searchOrder, setSearchOrder] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string>('todos');
+    const [openOrderId, setOpenOrderId] = useState<number | null>(null);
+    const [loadedDetails, setLoadedDetails] = useState<Record<number, any>>({});
+    const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
+    const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    const normalizarClaseEstado = (estado: string) =>
-        estado.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_');
+    const normalizeStatusClass = (status: string) =>
+        status.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_');
 
-    const cargarPedidos = async () => {
-        setCargandoPedidos(true);
+    const loadOrders = async () => {
+        setLoadingOrders(true);
         try {
             const response = await apiFetch('/api/pedidos');
             if (response.ok) {
                 const data = await response.json();
-                setPedidos(data);
+                setOrders(data);
                 if (onCountChange) onCountChange(data.length);
             }
         } catch (error) {
             console.error('Error al cargar pedidos:', error);
         } finally {
-            setCargandoPedidos(false);
+            setLoadingOrders(false);
         }
     };
 
     useEffect(() => {
-        cargarPedidos();
+        loadOrders();
     }, []);
 
-    const handleCambiarEstado = async (idPedido: number, nuevoEstado: string) => {
+    const handleChangeStatus = async (orderId: number, newStatus: string) => {
         try {
-            setActualizandoEstadoId(idPedido);
-            const res = await apiFetch(`/api/pedidos/${idPedido}/estado`, {
+            setUpdatingStatusId(orderId);
+            const res = await apiFetch(`/api/pedidos/${orderId}/estado`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: nuevoEstado }),
+                body: JSON.stringify({ estado: newStatus }),
             });
 
             if (!res.ok) {
@@ -82,67 +82,67 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                 throw new Error(errData.message || 'Error al actualizar el estado del pedido.');
             }
 
-            setPedidos((prev) =>
-                prev.map((p) => (p.IDPedido === idPedido ? { ...p, estado: nuevoEstado } : p))
+            setOrders((prev) =>
+                prev.map((order) => (order.IDPedido === orderId ? { ...order, estado: newStatus } : order))
             );
-            setMensajeExito(`Estado del Pedido #${idPedido} actualizado a "${nuevoEstado}".`);
-            setTimeout(() => setMensajeExito(null), 3500);
+            setSuccessMessage(`Estado del Pedido #${orderId} actualizado a "${newStatus}".`);
+            setTimeout(() => setSuccessMessage(null), 3500);
         } catch (error: any) {
             alert(error.message || 'Error al actualizar el estado del pedido.');
         } finally {
-            setActualizandoEstadoId(null);
+            setUpdatingStatusId(null);
         }
     };
 
-    const toggleDetallePedido = async (idPedido: number) => {
-        if (pedidoAbiertoId === idPedido) {
-            setPedidoAbiertoId(null);
+    const toggleOrderDetail = async (orderId: number) => {
+        if (openOrderId === orderId) {
+            setOpenOrderId(null);
             return;
         }
 
-        setPedidoAbiertoId(idPedido);
+        setOpenOrderId(orderId);
 
-        if (detallesCargados[idPedido]) return;
+        if (loadedDetails[orderId]) return;
 
         try {
-            setCargandoDetalleId(idPedido);
-            const res = await apiFetch(`/api/pedidos/${idPedido}`);
+            setLoadingDetailId(orderId);
+            const res = await apiFetch(`/api/pedidos/${orderId}`);
             if (res.ok) {
                 const data = await res.json();
-                setDetallesCargados((prev) => ({
+                setLoadedDetails((prev) => ({
                     ...prev,
-                    [idPedido]: data,
+                    [orderId]: data,
                 }));
             }
         } catch (err) {
             console.error('Error al cargar detalle del pedido:', err);
         } finally {
-            setCargandoDetalleId(null);
+            setLoadingDetailId(null);
         }
     };
 
-    const pedidosFiltrados = pedidos.filter((ped) => {
-        const coincideEstado = filtroEstado === 'todos' || ped.estado.toLowerCase() === filtroEstado.toLowerCase();
-        const query = busquedaPedido.trim().toLowerCase();
-        if (!query) return coincideEstado;
+    const filteredOrders = orders.filter((order) => {
+        const matchesStatus = statusFilter === 'todos' || order.estado.toLowerCase() === statusFilter.toLowerCase();
+        const query = searchOrder.trim().toLowerCase();
+        if (!query) return matchesStatus;
 
-        const nombreCompleto = `${ped.usuarioNombre || ''} ${ped.usuarioApellido || ''}`.toLowerCase();
-        const email = (ped.usuarioEmail || '').toLowerCase();
-        const id = ped.IDPedido.toString();
+        const fullName = `${order.usuarioNombre || ''} ${order.usuarioApellido || ''}`.toLowerCase();
+        const email = (order.usuarioEmail || '').toLowerCase();
+        const id = order.IDPedido.toString();
 
-        const coincideBusqueda =
-            nombreCompleto.includes(query) ||
+        const matchesSearch =
+            fullName.includes(query) ||
             email.includes(query) ||
             id.includes(query);
 
-        return coincideEstado && coincideBusqueda;
+        return matchesStatus && matchesSearch;
     });
 
     return (
         <section className="admin-section">
             <div className="section-header-row">
                 <h3 className="section-title">
-                    Pedidos Registrados ({pedidosFiltrados.length})
+                    Pedidos Registrados ({filteredOrders.length})
                 </h3>
 
                 <div className="admin-orders-filters">
@@ -151,15 +151,15 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                             type="text"
                             className="search-box-input"
                             placeholder="Buscar por ID, cliente o email..."
-                            value={busquedaPedido}
-                            onChange={(e) => setBusquedaPedido(e.target.value)}
+                            value={searchOrder}
+                            onChange={(e) => setSearchOrder(e.target.value)}
                         />
                     </div>
 
                     <select
                         className="admin-filter-select"
-                        value={filtroEstado}
-                        onChange={(e) => setFiltroEstado(e.target.value)}
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
                     >
                         <option value="todos">Todos los estados</option>
                         <option value="en preparacion">En preparación</option>
@@ -169,13 +169,13 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                 </div>
             </div>
 
-            {mensajeExito && (
+            {successMessage && (
                 <div className="admin-order-alert-success">
-                    <span>{mensajeExito}</span>
+                    <span>{successMessage}</span>
                     <button
                         type="button"
                         className="close-alert-btn"
-                        onClick={() => setMensajeExito(null)}
+                        onClick={() => setSuccessMessage(null)}
                         aria-label="Cerrar notificación"
                     >
                         &times;
@@ -183,32 +183,32 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                 </div>
             )}
 
-            {cargandoPedidos ? (
+            {loadingOrders ? (
                 <p className="empty-state">Cargando pedidos de la base de datos...</p>
-            ) : pedidos.length === 0 ? (
+            ) : orders.length === 0 ? (
                 <p className="empty-state">No se registraron pedidos en el sistema todavía.</p>
-            ) : pedidosFiltrados.length === 0 ? (
+            ) : filteredOrders.length === 0 ? (
                 <p className="empty-state">No se encontraron pedidos que coincidan con los filtros.</p>
             ) : (
                 <div className="admin-orders-list">
-                    {pedidosFiltrados.map((pedido) => {
-                        const estaAbierto = pedidoAbiertoId === pedido.IDPedido;
-                        const detalle = detallesCargados[pedido.IDPedido];
-                        const estaCargandoItems = cargandoDetalleId === pedido.IDPedido;
-                        const estaActualizando = actualizandoEstadoId === pedido.IDPedido;
+                    {filteredOrders.map((order) => {
+                        const isOpen = openOrderId === order.IDPedido;
+                        const detail = loadedDetails[order.IDPedido];
+                        const isLoadingItems = loadingDetailId === order.IDPedido;
+                        const isUpdating = updatingStatusId === order.IDPedido;
 
                         return (
-                            <article key={pedido.IDPedido} className="admin-order-card">
+                            <article key={order.IDPedido} className="admin-order-card">
                                 <div className="admin-order-header">
                                     <div className="admin-order-id-block">
                                         <div className="admin-order-id-row">
-                                            <span className="order-id">Pedido #{pedido.IDPedido}</span>
+                                            <span className="order-id">Pedido #{order.IDPedido}</span>
                                             <span className="admin-order-type-badge">
-                                                {pedido.tipo === 'impresion' ? 'Impresión' : 'Insumos'}
+                                                {order.tipo === 'impresion' ? 'Impresión' : 'Insumos'}
                                             </span>
                                         </div>
                                         <span className="order-date">
-                                            {new Date(pedido.fecha).toLocaleDateString('es-AR', {
+                                            {new Date(order.fecha).toLocaleDateString('es-AR', {
                                                 day: '2-digit',
                                                 month: '2-digit',
                                                 year: 'numeric',
@@ -220,15 +220,15 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
 
                                     <div className="admin-order-customer-info">
                                         <span className="admin-customer-name">
-                                            {pedido.usuarioNombre} {pedido.usuarioApellido || ''}
+                                            {order.usuarioNombre} {order.usuarioApellido || ''}
                                         </span>
-                                        <span className="admin-customer-email">{pedido.usuarioEmail}</span>
+                                        <span className="admin-customer-email">{order.usuarioEmail}</span>
                                     </div>
 
                                     <div className="admin-order-total-block">
                                         <span className="admin-total-label">Total</span>
                                         <span className="order-total-val">
-                                            ${Number(pedido.total).toLocaleString('es-AR', {
+                                            ${Number(order.total).toLocaleString('es-AR', {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2,
                                             })}
@@ -239,41 +239,41 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                                 <div className="admin-order-controls-row">
                                     <div className="admin-status-control">
                                         <label
-                                            htmlFor={`status-select-${pedido.IDPedido}`}
+                                            htmlFor={`status-select-${order.IDPedido}`}
                                             className="admin-status-label"
                                         >
                                             Estado:
                                         </label>
                                         <select
-                                            id={`status-select-${pedido.IDPedido}`}
-                                            className={`admin-status-select status-${normalizarClaseEstado(pedido.estado)}`}
-                                            value={pedido.estado}
-                                            disabled={estaActualizando}
-                                            onChange={(e) => handleCambiarEstado(pedido.IDPedido, e.target.value)}
+                                            id={`status-select-${order.IDPedido}`}
+                                            className={`admin-status-select status-${normalizeStatusClass(order.estado)}`}
+                                            value={order.estado}
+                                            disabled={isUpdating}
+                                            onChange={(e) => handleChangeStatus(order.IDPedido, e.target.value)}
                                         >
                                             <option value="en preparacion">En preparación</option>
                                             <option value="entregado">Entregado</option>
                                             <option value="cancelado">Cancelado</option>
                                         </select>
-                                        {estaActualizando && <span className="admin-updating-text">Guardando...</span>}
+                                        {isUpdating && <span className="admin-updating-text">Guardando...</span>}
                                     </div>
 
                                     <button
                                         type="button"
                                         className="btn-toggle-detail"
-                                        onClick={() => toggleDetallePedido(pedido.IDPedido)}
+                                        onClick={() => toggleOrderDetail(order.IDPedido)}
                                     >
-                                        {estaAbierto ? '▲ Ocultar Detalle' : '▼ Ver Productos y Detalles'}
+                                        {isOpen ? '▲ Ocultar Detalle' : '▼ Ver Productos y Detalles'}
                                     </button>
                                 </div>
 
-                                {estaAbierto && (
-                                    <div className="perfil-order-expanded">
-                                        {estaCargandoItems ? (
+                                {isOpen && (
+                                    <div className="admin-order-expanded">
+                                        {isLoadingItems ? (
                                             <p className="loading-items-text">Cargando información del pedido...</p>
-                                        ) : detalle ? (
+                                        ) : detail ? (
                                             <>
-                                                {detalle.tipo === 'insumo' && detalle.items && detalle.items.length > 0 ? (
+                                                {detail.tipo === 'insumo' && detail.items && detail.items.length > 0 ? (
                                                     <div className="order-items-table-wrapper">
                                                         <table className="order-items-table">
                                                             <thead>
@@ -285,7 +285,7 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                {detalle.items.map((item: PedidoItemDetalle) => (
+                                                                {detail.items.map((item: OrderItemDetail) => (
                                                                     <tr key={item.IDProducto}>
                                                                         <td className="item-name-cell">{item.nombre}</td>
                                                                         <td className="td-center">{item.cantidad} u.</td>
@@ -306,22 +306,22 @@ export function AdminPedidos({ onCountChange }: AdminPedidosProps) {
                                                             </tbody>
                                                         </table>
                                                     </div>
-                                                ) : detalle.tipo === 'impresion' ? (
+                                                ) : detail.tipo === 'impresion' ? (
                                                     <div className="admin-print-details">
                                                         <div className="admin-print-row">
-                                                            <span><strong>Copias:</strong> {detalle.cantCopias}</span>
-                                                            <span><strong>Faz:</strong> {detalle.faz}</span>
-                                                            <span><strong>Tamaño:</strong> {detalle.tamanio}</span>
-                                                            <span><strong>Impresión:</strong> {detalle.tipoColor}</span>
+                                                            <span><strong>Copias:</strong> {detail.cantCopias}</span>
+                                                            <span><strong>Faz:</strong> {detail.faz}</span>
+                                                            <span><strong>Tamaño:</strong> {detail.tamanio}</span>
+                                                            <span><strong>Impresión:</strong> {detail.tipoColor}</span>
                                                         </div>
-                                                        {detalle.fechaPrecioDesde && (
+                                                        {detail.fechaPrecioDesde && (
                                                             <div className="admin-print-obs">
-                                                                <strong>Precio aplicado desde:</strong> {detalle.fechaPrecioDesde}
+                                                                <strong>Precio aplicado desde:</strong> {detail.fechaPrecioDesde}
                                                             </div>
                                                         )}
-                                                        {detalle.observacion && (
+                                                        {detail.observacion && (
                                                             <div className="admin-print-obs">
-                                                                <strong>Observaciones:</strong> {detalle.observacion}
+                                                                <strong>Observaciones:</strong> {detail.observacion}
                                                             </div>
                                                         )}
                                                     </div>

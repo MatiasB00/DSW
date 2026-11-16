@@ -252,7 +252,7 @@
   color: #b91c1c;
 }
 
-.perfil-order-expanded {
+.admin-order-expanded {
   background-color: #fffdfa;
   border: 1px solid #ebdcd0;
   border-radius: 6px;
@@ -353,4 +353,3 @@
     align-items: center;
   }
 }
-

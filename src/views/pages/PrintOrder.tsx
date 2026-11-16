@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PRINTING_SIZES } from '../../shared/printingSizes';
 import { apiFetch } from '../lib/apiFetch';
-import './PedidoImpresion.css';
+import './PrintOrder.css';
 
-interface PrecioImpresion {
+export interface PrintingPrice {
     fechaDesde: string;
     tamanio: string;
     precioTamanio: number | string;
@@ -15,69 +15,69 @@ interface PrecioImpresion {
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 
-export function PedidoImpresion() {
+export function PrintOrder() {
     const navigate = useNavigate();
-    const [precios, setPrecios] = useState<PrecioImpresion[]>([]);
-    const [tamanio, setTamanio] = useState('');
-    const [tipoColor, setTipoColor] = useState<'blanco y negro' | 'color'>('blanco y negro');
-    const [faz, setFaz] = useState<'simple' | 'doble'>('simple');
-    const [archivo, setArchivo] = useState<File | null>(null);
-    const [cantidadHojas, setCantidadHojas] = useState<number | null>(null);
-    const [observacion, setObservacion] = useState('');
-    const [cargandoPrecios, setCargandoPrecios] = useState(true);
-    const [enviando, setEnviando] = useState(false);
+    const [prices, setPrices] = useState<PrintingPrice[]>([]);
+    const [size, setSize] = useState('');
+    const [colorType, setColorType] = useState<'blanco y negro' | 'color'>('blanco y negro');
+    const [side, setSide] = useState<'simple' | 'doble'>('simple');
+    const [file, setFile] = useState<File | null>(null);
+    const [pageCount, setPageCount] = useState<number | null>(null);
+    const [note, setNote] = useState('');
+    const [loadingPrices, setLoadingPrices] = useState(true);
+    const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const cargarPrecios = async () => {
+        const loadPrices = async () => {
             try {
                 const response = await apiFetch('/api/precios-impresiones');
                 if (!response.ok) throw new Error('No se pudieron cargar los precios de impresión.');
-                setPrecios(await response.json());
+                setPrices(await response.json());
             } catch (loadError) {
                 setError(loadError instanceof Error ? loadError.message : 'Error al cargar los precios.');
             } finally {
-                setCargandoPrecios(false);
+                setLoadingPrices(false);
             }
         };
-        void cargarPrecios();
+        void loadPrices();
     }, []);
 
-    const precioActual = useMemo(
-        () => precios.find((precio) => precio.tamanio === tamanio),
-        [precios, tamanio],
+    const currentPrice = useMemo(
+        () => prices.find((price) => price.tamanio === size),
+        [prices, size],
     );
-    const cantCopias = cantidadHojas === null
+    const copiesCount = pageCount === null
         ? null
-        : faz === 'doble'
-            ? Math.ceil(cantidadHojas / 2)
-            : cantidadHojas;
+        : side === 'doble'
+            ? Math.ceil(pageCount / 2)
+            : pageCount;
     const subtotal = useMemo(() => {
-        if (!precioActual || cantCopias === null) return null;
-        const precioCopia = tipoColor === 'color'
-            ? Number(precioActual.precioColor)
-            : Number(precioActual.precioByN);
-        const total = cantCopias *
-            (Number(precioActual.precioTamanio) + precioCopia) *
-            Number(precioActual.factorGanancia);
+        if (!currentPrice || copiesCount === null) return null;
+        const copyPrice = colorType === 'color'
+            ? Number(currentPrice.precioColor)
+            : Number(currentPrice.precioByN);
+        const total = copiesCount *
+            (Number(currentPrice.precioTamanio) + copyPrice) *
+            Number(currentPrice.factorGanancia);
         return Math.round((total + Number.EPSILON) * 100) / 100;
-    }, [cantCopias, precioActual, tipoColor]);
+    }, [copiesCount, currentPrice, colorType]);
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = event.target.files?.[0] ?? null;
-        setArchivo(selectedFile);
-        setCantidadHojas(null);
+        setFile(selectedFile);
+        setPageCount(null);
         setError(null);
         if (!selectedFile) return;
 
         if (!/\.pdf$/i.test(selectedFile.name)) {
-            setArchivo(null);
+            setFile(null);
             setError('El archivo debe tener extensión .pdf.');
             event.target.value = '';
             return;
         }
         if (selectedFile.size > MAX_FILE_BYTES) {
-            setArchivo(null);
+            setFile(null);
             setError('El archivo no puede superar los 20 MB.');
             event.target.value = '';
             return;
@@ -91,10 +91,10 @@ export function PedidoImpresion() {
             GlobalWorkerOptions.workerSrc = pdfWorker.default;
             const task = getDocument({ data: await selectedFile.arrayBuffer() });
             const pdf = await task.promise;
-            setCantidadHojas(pdf.numPages);
+            setPageCount(pdf.numPages);
             await task.destroy();
         } catch {
-            setArchivo(null);
+            setFile(null);
             setError('No se pudo leer el PDF. Verificá que el archivo no esté dañado.');
             event.target.value = '';
         }
@@ -102,17 +102,17 @@ export function PedidoImpresion() {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (!archivo || cantCopias === null || !precioActual) return;
-        setEnviando(true);
+        if (!file || copiesCount === null || !currentPrice) return;
+        setSending(true);
         setError(null);
 
         const formData = new FormData();
-        formData.append('archivo', archivo, archivo.name);
-        formData.append('tamanio', tamanio);
-        formData.append('tipoColor', tipoColor);
-        formData.append('faz', faz);
-        formData.append('cantCopias', String(cantCopias));
-        if (observacion.trim()) formData.append('observacion', observacion.trim());
+        formData.append('archivo', file, file.name);
+        formData.append('tamanio', size);
+        formData.append('tipoColor', colorType);
+        formData.append('faz', side);
+        formData.append('cantCopias', String(copiesCount));
+        if (note.trim()) formData.append('observacion', note.trim());
 
         try {
             const response = await apiFetch('/api/pedidos/impresion', {
@@ -128,7 +128,7 @@ export function PedidoImpresion() {
         } catch (submitError) {
             setError(submitError instanceof Error ? submitError.message : 'Error al crear el pedido.');
         } finally {
-            setEnviando(false);
+            setSending(false);
         }
     };
 
@@ -144,9 +144,9 @@ export function PedidoImpresion() {
             <form className="print-order-form" onSubmit={handleSubmit}>
                 <label>
                     Tamaño de papel
-                    <select value={tamanio} onChange={(event) => setTamanio(event.target.value)} required>
+                    <select value={size} onChange={(event) => setSize(event.target.value)} required>
                         <option value="" disabled>Seleccionar tamaño</option>
-                        {PRINTING_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                        {PRINTING_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </label>
 
@@ -155,8 +155,8 @@ export function PedidoImpresion() {
                     <label>
                         Color
                         <select
-                            value={tipoColor}
-                            onChange={(event) => setTipoColor(event.target.value as 'blanco y negro' | 'color')}
+                            value={colorType}
+                            onChange={(event) => setColorType(event.target.value as 'blanco y negro' | 'color')}
                         >
                             <option value="blanco y negro">Blanco y negro</option>
                             <option value="color">Color</option>
@@ -165,8 +165,8 @@ export function PedidoImpresion() {
                     <label>
                         Faz
                         <select
-                            value={faz}
-                            onChange={(event) => setFaz(event.target.value as 'simple' | 'doble')}
+                            value={side}
+                            onChange={(event) => setSide(event.target.value as 'simple' | 'doble')}
                         >
                             <option value="simple">Simple faz</option>
                             <option value="doble">Doble faz</option>
@@ -184,27 +184,27 @@ export function PedidoImpresion() {
                     />
                 </label>
 
-                {cantidadHojas !== null && cantCopias !== null && (
+                {pageCount !== null && copiesCount !== null && (
                     <p className="print-order-pages" role="status">
-                        El PDF tiene {cantidadHojas} paginas; se cobrarán {cantCopias} copias
-                        {faz === 'doble' ? ' (Doble faz)' : ' (Simple Faz)'}.
+                        El PDF tiene {pageCount} paginas; se cobrarán {copiesCount} copias
+                        {side === 'doble' ? ' (Doble faz)' : ' (Simple Faz)'}.
                     </p>
                 )}
 
                 <label>
                     Observación (opcional)
                     <textarea
-                        value={observacion}
-                        onChange={(event) => setObservacion(event.target.value)}
+                        value={note}
+                        onChange={(event) => setNote(event.target.value)}
                         maxLength={2000}
                         rows={4}
                     />
                 </label>
 
                 <div className="print-order-summary">
-                    {cargandoPrecios ? (
+                    {loadingPrices ? (
                         <span>Consultando precios...</span>
-                    ) : precioActual && subtotal !== null ? (
+                    ) : currentPrice && subtotal !== null ? (
                         <>
                             <span>Subtotal estimado</span>
                             <strong>
@@ -216,8 +216,8 @@ export function PedidoImpresion() {
                         </>
                     ) : (
                         <span>
-                            {tamanio
-                                ? `No hay un precio configurado para ${tamanio}.`
+                            {size
+                                ? `No hay un precio configurado para ${size}.`
                                 : 'Seleccioná un tamaño para consultar el precio.'}
                         </span>
                     )}
@@ -226,9 +226,9 @@ export function PedidoImpresion() {
                 <button
                     className="print-order-submit"
                     type="submit"
-                    disabled={enviando || cargandoPrecios || !precioActual || cantCopias === null}
+                    disabled={sending || loadingPrices || !currentPrice || copiesCount === null}
                 >
-                    {enviando ? 'Enviando pedido...' : 'Crear pedido de impresión'}
+                    {sending ? 'Enviando pedido...' : 'Crear pedido de impresión'}
                 </button>
             </form>
         </main>

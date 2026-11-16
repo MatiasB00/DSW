@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/apiFetch';
 import './ProductForm.css';
 
-export interface Producto {
+export interface Product {
     IDProducto: number;
     nombre: string;
     descripcion: string;
@@ -15,102 +15,99 @@ export interface Producto {
 }
 
 interface ProductFormProps {
-    productoAEditar: Producto | null;
-    versionCategorias?: number;
-    onGuardarExito: () => void;
-    onCancelarEdicion: () => void;
+    productToEdit: Product | null;
+    categoriesVersion?: number;
+    onSaveSuccess: () => void;
+    onCancelEdit: () => void;
 }
 
-export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion, versionCategorias }: ProductFormProps) {
-    const [nombre, setNombre] = useState('');
-    const [descripcion, setDescripcion] = useState('')
+export function ProductForm({ productToEdit, onSaveSuccess, onCancelEdit, categoriesVersion }: ProductFormProps) {
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
     const [stock, setStock] = useState<number | ''>('');
-    const [precio, setPrecio] = useState('');
-    const [idProveedor, setIdProveedor] = useState<number | ''>('');
-    const [idCategoria, setIdCategoria] = useState<number | ''>('');
-    const [proveedores, setProveedores] = useState<Array<{ IDProveedor: number; razonSocial: string }>>([]);
-    const [categorias, setCategorias] = useState<Array<{ IDCategoria: number; nombre: string }>>([]);
-    const [cargando, setCargando] = useState(false);
-    const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
+    const [price, setPrice] = useState('');
+    const [providerId, setProviderId] = useState<number | ''>('');
+    const [categoryId, setCategoryId] = useState<number | ''>('');
+    const [providers, setProviders] = useState<Array<{ IDProveedor: number; razonSocial: string }>>([]);
+    const [categories, setCategories] = useState<Array<{ IDCategoria: number; nombre: string }>>([]);
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     useEffect(() => {
         apiFetch('/api/proveedores')
             .then((res) => res.json())
-            .then((data) => setProveedores(data))
+            .then((data) => setProviders(data))
             .catch((err) => console.error('Error al cargar proveedores:', err));
     }, []);
-
 
     useEffect(() => {
         apiFetch('/api/categorias')
             .then((res) => res.json())
-            .then((data) => setCategorias(data))
+            .then((data) => setCategories(data))
             .catch((err) => console.error('Error al cargar categorías:', err));
-    }, [versionCategorias]);
-
+    }, [categoriesVersion]);
 
     useEffect(() => {
-        if (productoAEditar) {
-            setNombre(productoAEditar.nombre);
-            setDescripcion(productoAEditar.descripcion || '');
-            setStock(productoAEditar.stock !== undefined ? productoAEditar.stock : '');
-            setPrecio(String(productoAEditar.precio));
-            setIdProveedor(productoAEditar.IDProveedor || '');
-            setIdCategoria(productoAEditar.IDCategoria || '');
-            setMensaje(null);
+        if (productToEdit) {
+            setName(productToEdit.nombre);
+            setDescription(productToEdit.descripcion || '');
+            setStock(productToEdit.stock !== undefined ? productToEdit.stock : '');
+            setPrice(String(productToEdit.precio));
+            setProviderId(productToEdit.IDProveedor || '');
+            setCategoryId(productToEdit.IDCategoria || '');
+            setMessage(null);
         } else {
-            setNombre('');
-            setDescripcion('');
+            setName('');
+            setDescription('');
             setStock('');
-            setPrecio('');
-            setIdProveedor('');
-            setIdCategoria('');
+            setPrice('');
+            setProviderId('');
+            setCategoryId('');
         }
-    }, [productoAEditar]);
+    }, [productToEdit]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setMensaje(null);
+        setMessage(null);
 
-        setCargando(true);
-        const esEdicion = Boolean(productoAEditar);
+        setLoading(true);
+        const isEditing = Boolean(productToEdit);
 
         try {
-            if (esEdicion) {
-                const resProd = await apiFetch(`/api/productos/${productoAEditar!.IDProducto}`, {
+            if (isEditing) {
+                const resProd = await apiFetch(`/api/productos/${productToEdit!.IDProducto}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        nombre: nombre.trim(),
-                        descripcion: descripcion.trim(),
+                        nombre: name.trim(),
+                        descripcion: description.trim(),
                         stock: stock !== '' ? Number(stock) : 0,
-                        IDProveedor: idProveedor ? Number(idProveedor) : null,
-                        IDCategoria: idCategoria ? Number(idCategoria) : null,
+                        IDProveedor: providerId ? Number(providerId) : null,
+                        IDCategoria: categoryId ? Number(categoryId) : null,
                     }),
                 });
                 if (!resProd.ok) throw new Error('No se pudo actualizar el producto.');
 
-                if (Number(precio) !== Number(productoAEditar!.precio)) {
-                    const resPrecio = await apiFetch(`/api/productos/${productoAEditar!.IDProducto}/precios`, {
+                if (Number(price) !== Number(productToEdit!.precio)) {
+                    const resPrecio = await apiFetch(`/api/productos/${productToEdit!.IDProducto}/precios`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ valor: Number(precio) }),
+                        body: JSON.stringify({ valor: Number(price) }),
                     });
                     if (!resPrecio.ok) throw new Error('No se pudo actualizar el precio.');
                 }
 
-                setMensaje({ tipo: 'exito', texto: '¡Producto y precio actualizados con éxito!' });
+                setMessage({ type: 'success', text: '¡Producto y precio actualizados con éxito!' });
             } else {
                 const resProd = await apiFetch('/api/productos', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        nombre: nombre.trim(),
-                        descripcion: descripcion.trim(),
+                        nombre: name.trim(),
+                        descripcion: description.trim(),
                         stock: stock !== '' ? Number(stock) : 0,
-
-                        IDProveedor: idProveedor ? Number(idProveedor) : null,
-                        IDCategoria: idCategoria ? Number(idCategoria) : null,
+                        IDProveedor: providerId ? Number(providerId) : null,
+                        IDCategoria: categoryId ? Number(categoryId) : null,
                     }),
                 });
                 if (!resProd.ok) throw new Error('Error al crear el producto.');
@@ -120,24 +117,24 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                 const resPrecio = await apiFetch(`/api/productos/${dataProd.id}/precios`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ valor: Number(precio) }),
+                    body: JSON.stringify({ valor: Number(price) }),
                 });
                 if (!resPrecio.ok) throw new Error('El producto se creó, pero no se pudo guardar su precio inicial.');
 
-                setMensaje({ tipo: 'exito', texto: '¡Producto y precio inicial creados con éxito!' });
-                setNombre('');
-                setDescripcion('');
+                setMessage({ type: 'success', text: '¡Producto y precio inicial creados con éxito!' });
+                setName('');
+                setDescription('');
                 setStock('');
-                setPrecio('');
-                setIdProveedor('');
-                setIdCategoria('');
+                setPrice('');
+                setProviderId('');
+                setCategoryId('');
             }
 
-            onGuardarExito();
+            onSaveSuccess();
         } catch (error: any) {
-            setMensaje({ tipo: 'error', texto: error.message || 'Error al procesar la solicitud.' });
+            setMessage({ type: 'error', text: error.message || 'Error al procesar la solicitud.' });
         } finally {
-            setCargando(false);
+            setLoading(false);
         }
     };
 
@@ -145,19 +142,19 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
         <article className="product-form-card">
             <header className="product-form-header">
                 <h3 className="product-form-title">
-                    {productoAEditar ? `Editar Producto #${productoAEditar.IDProducto}` : 'Registrar Nuevo Producto'}
+                    {productToEdit ? `Editar Producto #${productToEdit.IDProducto}` : 'Registrar Nuevo Producto'}
                 </h3>
                 <p className="product-form-subtitle">
-                    {productoAEditar
+                    {productToEdit
                         ? 'Modifica los datos del producto o actualiza su precio de cotización'
                         : 'Ingresa los datos del insumo o producto y su proveedor'}
                 </p>
             </header>
 
-            {mensaje && (
-                <div className={`form-feedback-alert feedback-${mensaje.tipo}`}>
-                    {mensaje.texto}
-                    <button className="close-alert-btn" type="button" onClick={() => setMensaje(null)} aria-label='Cerrar notificacion'>
+            {message && (
+                <div className={`form-feedback-alert feedback-${message.type}`}>
+                    {message.text}
+                    <button className="close-alert-btn" type="button" onClick={() => setMessage(null)} aria-label='Cerrar notificacion'>
                         X
                     </button>
                 </div>
@@ -171,8 +168,8 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                         type="text"
                         className="field-control"
                         placeholder="Ej: Resma Papel A4 75g Chambril"
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
                         required
                     />
                 </div>
@@ -182,11 +179,11 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                     <select
                         id="prod-proveedor"
                         className="field-control"
-                        value={idProveedor}
-                        onChange={(e) => setIdProveedor(e.target.value ? Number(e.target.value) : '')}
+                        value={providerId}
+                        onChange={(e) => setProviderId(e.target.value ? Number(e.target.value) : '')}
                     >
                         <option value="">-- Sin Proveedor --</option>
-                        {proveedores.map((prov) => (
+                        {providers.map((prov) => (
                             <option key={prov.IDProveedor} value={prov.IDProveedor}>
                                 {prov.razonSocial}
                             </option>
@@ -199,11 +196,11 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                     <select
                         id="prod-categoria"
                         className="field-control"
-                        value={idCategoria}
-                        onChange={(e) => setIdCategoria(e.target.value ? Number(e.target.value) : '')}
+                        value={categoryId}
+                        onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : '')}
                     >
                         <option value="">-- Sin Categoría --</option>
-                        {categorias.map((cat) => (
+                        {categories.map((cat) => (
                             <option key={cat.IDCategoria} value={cat.IDCategoria}>
                                 {cat.nombre}
                             </option>
@@ -220,8 +217,8 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                         min="0"
                         className="field-control"
                         placeholder="Ej: 12500.00"
-                        value={precio}
-                        onChange={(e) => setPrecio(e.target.value)}
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
                         required
                     />
                 </div>
@@ -248,24 +245,24 @@ export function ProductForm({ productoAEditar, onGuardarExito, onCancelarEdicion
                         rows={5}
                         className="field-control field-textarea"
                         placeholder="Especificaciones técnicas, gramaje, terminación..."
-                        value={descripcion}
-                        onChange={(e) => setDescripcion(e.target.value)}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
                     />
                 </div>
 
                 <div className="form-actions-bar full-width">
-                    {productoAEditar && (
+                    {productToEdit && (
                         <button
                             type="button"
                             className="btn-cancel-action"
-                            onClick={onCancelarEdicion}
-                            disabled={cargando}
+                            onClick={onCancelEdit}
+                            disabled={loading}
                         >
                             Cancelar
                         </button>
                     )}
-                    <button type="submit" className="btn-save-submit" disabled={cargando}>
-                        {cargando ? 'Guardando...' : productoAEditar ? 'Guardar Cambios' : 'Crear Producto'}
+                    <button type="submit" className="btn-save-submit" disabled={loading}>
+                        {loading ? 'Guardando...' : productToEdit ? 'Guardar Cambios' : 'Crear Producto'}
                     </button>
                 </div>
             </form>

@@ -1,36 +1,33 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCarrito } from '../context/carritoContext';
+import { useCart } from '../context/cartContext';
 import { apiFetch } from '../lib/apiFetch';
-import './Carrito.css';
+import './Cart.css';
 
-
-
-export function Carrito() {
-
+export function Cart() {
     const navigate = useNavigate();
 
     const {
         items,
-        actualizarCantidad,
-        eliminarProducto,
-        vaciarCarrito,
+        updateQuantity,
+        removeItem,
+        clearCart,
         totalItems,
-        totalPrecio,
-    } = useCarrito();
+        totalPrice,
+    } = useCart();
 
-    const [enviando, setEnviando] = useState(false);
-    const [errorPedido, setErrorPedido] = useState<string | null>(null);
+    const [sending, setSending] = useState(false);
+    const [orderError, setOrderError] = useState<string | null>(null);
 
-    const handleConfirmarPedido = async () => {
-        setErrorPedido(null);
+    const handleConfirmOrder = async () => {
+        setOrderError(null);
         if (!localStorage.getItem('token')) {
             alert('Debés iniciar sesión para confirmar tu pedido.');
             navigate('/login');
             return;
         }
         if (items.length === 0) return;
-        setEnviando(true);
+        setSending(true);
         try {
             const res = await apiFetch('/api/pedidos', {
                 method: 'POST',
@@ -49,13 +46,13 @@ export function Carrito() {
                 const dataErr = await res.json().catch(() => ({}));
                 throw new Error(dataErr.message || 'Error al procesar el pedido.');
             }
-            const pedidoCreado = await res.json();
-            vaciarCarrito();
-            navigate('/perfil', { state: { nuevoPedidoId: pedidoCreado.IDPedido } });
+            const createdOrder = await res.json();
+            clearCart();
+            navigate('/perfil', { state: { nuevoPedidoId: createdOrder.IDPedido } });
         } catch (err: any) {
-            setErrorPedido(err.message || 'No se pudo confirmar el pedido.');
+            setOrderError(err.message || 'No se pudo confirmar el pedido.');
         } finally {
-            setEnviando(false);
+            setSending(false);
         }
     };
 
@@ -86,7 +83,7 @@ export function Carrito() {
                             <button
                                 type="button"
                                 className="btn-clear-cart"
-                                onClick={vaciarCarrito}
+                                onClick={clearCart}
                             >
                                 Vaciar Carrito
                             </button>
@@ -109,7 +106,7 @@ export function Carrito() {
                                         <button
                                             type="button"
                                             className="btn-qty"
-                                            onClick={() => actualizarCantidad(item.IDProducto, item.cantidad - 1)}
+                                            onClick={() => updateQuantity(item.IDProducto, item.cantidad - 1)}
                                             aria-label="Disminuir cantidad"
                                         >
                                             -
@@ -118,7 +115,7 @@ export function Carrito() {
                                         <button
                                             type="button"
                                             className="btn-qty"
-                                            onClick={() => actualizarCantidad(item.IDProducto, item.cantidad + 1)}
+                                            onClick={() => updateQuantity(item.IDProducto, item.cantidad + 1)}
                                             aria-label="Aumentar cantidad"
                                         >
                                             +
@@ -138,7 +135,7 @@ export function Carrito() {
                                     <button
                                         type="button"
                                         className="btn-remove-item"
-                                        onClick={() => eliminarProducto(item.IDProducto)}
+                                        onClick={() => removeItem(item.IDProducto)}
                                         title="Eliminar del carrito"
                                     >
                                         Eliminar
@@ -159,7 +156,7 @@ export function Carrito() {
                         <div className="summary-row">
                             <span>Subtotal estimado</span>
                             <span>
-                                ${totalPrecio.toLocaleString('es-AR', {
+                                ${totalPrice.toLocaleString('es-AR', {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                 })}
@@ -171,23 +168,23 @@ export function Carrito() {
                         <div className="summary-row summary-total-row">
                             <span>Total</span>
                             <span className="summary-total-val">
-                                ${totalPrecio.toLocaleString('es-AR', {
+                                ${totalPrice.toLocaleString('es-AR', {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                 })}
                             </span>
                         </div>
 
-                        {errorPedido && (
-                            <p className="cart-error-message">{errorPedido}</p>
+                        {orderError && (
+                            <p className="cart-error-message">{orderError}</p>
                         )}
                         <button
                             type="button"
                             className="btn-confirm-order"
-                            onClick={handleConfirmarPedido}
-                            disabled={enviando}
+                            onClick={handleConfirmOrder}
+                            disabled={sending}
                         >
-                            {enviando ? 'Confirmando pedido...' : 'Confirmar Pedido'}
+                            {sending ? 'Confirmando pedido...' : 'Confirmar Pedido'}
                         </button>
 
                         <Link to="/productos" className="link-continue-shopping">

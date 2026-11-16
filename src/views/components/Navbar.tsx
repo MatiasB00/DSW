@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCarrito } from '../context/carritoContext';
+import { useCart } from '../context/cartContext';
 import { apiFetch } from '../lib/apiFetch';
 import './Navbar.css';
 
-interface UsuarioSesion {
+interface UserSession {
     IDUsuario: number;
     nombre: string;
     apellido: string;
@@ -15,18 +15,18 @@ interface UsuarioSesion {
 export function Navbar() {
     const navigate = useNavigate();
 
-    const [menuAbierto, setMenuAbierto] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
 
-    const [usuario, setUsuario] = useState<UsuarioSesion | null>(() => {
+    const [user, setUser] = useState<UserSession | null>(() => {
         const stored = localStorage.getItem('user');
         return stored ? JSON.parse(stored) : null;
     });
-    const { totalItems } = useCarrito();
+    const { totalItems } = useCart();
 
     useEffect(() => {
-        const sincronizarAuth = async () => {
+        const syncAuth = async () => {
             if (!localStorage.getItem('token')) {
-                setUsuario(null);
+                setUser(null);
                 return;
             }
 
@@ -35,7 +35,7 @@ export function Navbar() {
                 if (response.status === 401 || response.status === 403) {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
-                    setUsuario(null);
+                    setUser(null);
                     return;
                 }
                 if (!response.ok) {
@@ -43,86 +43,85 @@ export function Navbar() {
                 }
                 const currentUser = await response.json();
                 localStorage.setItem('user', JSON.stringify(currentUser));
-                setUsuario(currentUser);
+                setUser(currentUser);
             } catch (error) {
                 console.error('Error al verificar la sesión:', error);
             }
         };
 
-        void sincronizarAuth();
-        window.addEventListener('authChange', sincronizarAuth);
-        window.addEventListener('storage', sincronizarAuth);
+        void syncAuth();
+        window.addEventListener('authChange', syncAuth);
+        window.addEventListener('storage', syncAuth);
 
         return () => {
-            window.removeEventListener('authChange', sincronizarAuth);
-            window.removeEventListener('storage', sincronizarAuth);
+            window.removeEventListener('authChange', syncAuth);
+            window.removeEventListener('storage', syncAuth);
         };
     }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        setUsuario(null);
+        setUser(null);
         window.dispatchEvent(new Event('authChange'));
-        setMenuAbierto(false);
+        setMenuOpen(false);
         navigate('/');
     };
 
-    const cerrarMenu = () => setMenuAbierto(false);
+    const closeMenu = () => setMenuOpen(false);
 
     return (
         <header className="navbar">
             <div className="navbar-container">
                 <div className="navbar-brand">
-                    <Link to="/" className="navbar-logo" onClick={cerrarMenu}>
+                    <Link to="/" className="navbar-logo" onClick={closeMenu}>
                         Imprenta Mayorista
                     </Link>
                 </div>
 
                 <button
                     type="button"
-                    className={`hamburger-btn ${menuAbierto ? 'is-active' : ''}`}
-                    onClick={() => setMenuAbierto(!menuAbierto)}
-                    aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
-                    aria-expanded={menuAbierto}
+                    className={`hamburger-btn ${menuOpen ? 'is-active' : ''}`}
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                    aria-expanded={menuOpen}
                 >
                     <span className="hamburger-line"></span>
                     <span className="hamburger-line"></span>
                     <span className="hamburger-line"></span>
                 </button>
 
-                <nav className={`navbar-nav ${menuAbierto ? 'nav-open' : ''}`}>
-                    <Link to="/" className="nav-link" onClick={cerrarMenu}>
+                <nav className={`navbar-nav ${menuOpen ? 'nav-open' : ''}`}>
+                    <Link to="/" className="nav-link" onClick={closeMenu}>
                         Inicio
                     </Link>
-                    <Link to="/productos" className="nav-link" onClick={cerrarMenu}>
+                    <Link to="/productos" className="nav-link" onClick={closeMenu}>
                         Productos
                     </Link>
-                    <Link to="/pedido-impresion" className="nav-link" onClick={cerrarMenu}>
+                    <Link to="/pedido-impresion" className="nav-link" onClick={closeMenu}>
                         Pedido de impresión
                     </Link>
-                    <Link to="/nosotros" className="nav-link" onClick={cerrarMenu}>
+                    <Link to="/nosotros" className="nav-link" onClick={closeMenu}>
                         Nosotros
                     </Link>
-                    <Link to="/carrito" className="nav-link nav-link-cart" onClick={cerrarMenu}>
+                    <Link to="/carrito" className="nav-link nav-link-cart" onClick={closeMenu}>
                         Carrito {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
                     </Link>
 
-
-                    {!usuario && (
-                        <Link to="/login" className="btn-login" onClick={cerrarMenu}>
+                    {!user && (
+                        <Link to="/login" className="btn-login" onClick={closeMenu}>
                             Iniciar Sesión
                         </Link>
                     )}
 
-                    {usuario && (
+                    {user && (
                         <div className="navbar-user-group">
-                            {usuario.rol === 'admin' ? (
-                                <Link to="/admin" className="btn-login" onClick={cerrarMenu}>
+                            {user.rol === 'admin' ? (
+                                <Link to="/admin" className="btn-login" onClick={closeMenu}>
                                     Panel Admin
                                 </Link>
                             ) : (
-                                <Link to="/perfil" className="btn-login" onClick={cerrarMenu}>
+                                <Link to="/perfil" className="btn-login" onClick={closeMenu}>
                                     Mi Perfil
                                 </Link>
                             )}

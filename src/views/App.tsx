@@ -1,36 +1,36 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { CarritoProvider } from './context/carritoContext';
+import { CartProvider } from './context/cartContext';
 import { Navbar } from './components/Navbar';
 import { Home } from './pages/Home';
-import { Nosotros } from './pages/Nosotros';
+import { AboutUs } from './pages/AboutUs';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
-import { Adminpanel } from './pages/Adminpanel';
-import { Perfil } from './pages/Perfil';
-import { Productos } from './pages/Productos';
-import { Carrito } from './pages/Carrito';
+import { AdminPanel } from './pages/AdminPanel';
+import { Profile } from './pages/Profile';
+import { Products } from './pages/Products';
+import { Cart } from './pages/Cart';
 import { RequireAdmin } from './components/RequireAdmin';
 import { RequireAuth } from './components/RequireAuth';
-import { PedidoImpresion } from './pages/PedidoImpresion';
+import { PrintOrder } from './pages/PrintOrder';
 
 export function App() {
   return (
     <BrowserRouter>
-      <CarritoProvider>
+      <CartProvider>
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/nosotros" element={<Nosotros />} />
-          <Route path="/productos" element={<Productos />} />
+          <Route path="/nosotros" element={<AboutUs />} />
+          <Route path="/productos" element={<Products />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/admin" element={<RequireAdmin><Adminpanel /></RequireAdmin>} />
-          <Route path="/pedido-impresion" element={<RequireAuth><PedidoImpresion /></RequireAuth>} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/carrito" element={<Carrito />} />
+          <Route path="/admin" element={<RequireAdmin><AdminPanel /></RequireAdmin>} />
+          <Route path="/pedido-impresion" element={<RequireAuth><PrintOrder /></RequireAuth>} />
+          <Route path="/perfil" element={<Profile />} />
+          <Route path="/carrito" element={<Cart />} />
         </Routes>
-      </CarritoProvider>
+      </CartProvider>
     </BrowserRouter>
   );
 }

@@ -6,36 +6,36 @@ export function Login() {
     const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
-    const [contrasenia, setContrasenia] = useState('');
+    const [password, setPassword] = useState('');
 
-    const [cargando, setCargando] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
 
-        if (!email.trim() || !contrasenia) {
+        if (!email.trim() || !password) {
             setError('Por favor, ingresa tu correo y contraseña.');
             return;
         }
 
         try {
-            setCargando(true);
-            const respuesta = await fetch('/api/auth/login', {
+            setLoading(true);
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     email: email.trim(),
-                    contrasenia,
+                    contrasenia: password,
                 }),
             });
 
-            const data = await respuesta.json();
+            const data = await response.json();
 
-            if (!respuesta.ok) {
+            if (!response.ok) {
                 throw new Error(data.message || 'Credenciales inválidas.');
             }
 
@@ -48,7 +48,7 @@ export function Login() {
         } catch (err: any) {
             setError(err.message || 'Error al iniciar sesión.');
         } finally {
-            setCargando(false);
+            setLoading(false);
         }
     };
 
@@ -97,20 +97,29 @@ export function Login() {
                             type="password"
                             placeholder="••••••••"
                             className="form-input"
-                            value={contrasenia}
-                            onChange={(e) => setContrasenia(e.target.value)}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             required
                         />
                     </div>
 
-                    <button type="submit" className="btn-submit" disabled={cargando}>
-                        {cargando ? 'Ingresando...' : 'Ingresar'}
+                    <button
+                        type="submit"
+                        className="btn-submit"
+                        disabled={loading}
+                    >
+                        {loading ? 'Iniciando sesión...' : 'Entrar'}
                     </button>
                 </form>
 
-                <p className="auth-footer">
-                    ¿No tienes una cuenta? <Link to="/register" className="auth-link">Regístrate aquí</Link>
-                </p>
+                <div className="auth-footer">
+                    <p>
+                        ¿No tienes una cuenta?{' '}
+                        <Link to="/register" className="auth-link">
+                            Regístrate aquí
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );

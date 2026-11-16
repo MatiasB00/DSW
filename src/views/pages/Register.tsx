@@ -5,52 +5,52 @@ import './Auth.css';
 export function Register() {
     const navigate = useNavigate();
 
-    const [nombre, setNombre] = useState('');
-    const [apellido, setApellido] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
-    const [contrasenia, setContrasenia] = useState('');
-    const [confirmarContrasenia, setConfirmarContrasenia] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
 
-    const [cargando, setCargando] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
 
-        if (!nombre.trim() || !apellido.trim() || !email.trim() || !contrasenia) {
+        if (!firstName.trim() || !lastName.trim() || !email.trim() || !password) {
             setError('Por favor, completa todos los campos.');
             return;
         }
 
-        if (contrasenia.length < 6) {
+        if (password.length < 6) {
             setError('La contraseña debe tener al menos 6 caracteres.');
             return;
         }
 
-        if (contrasenia !== confirmarContrasenia) {
+        if (password !== confirmPassword) {
             setError('Las contraseñas no coinciden.');
             return;
         }
 
         try {
-            setCargando(true);
-            const respuesta = await fetch('/api/auth/register', {
+            setLoading(true);
+            const response = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    nombre: nombre.trim(),
-                    apellido: apellido.trim(),
+                    nombre: firstName.trim(),
+                    apellido: lastName.trim(),
                     email: email.trim(),
-                    contrasenia,
+                    contrasenia: password,
                 }),
             });
 
-            const data = await respuesta.json();
+            const data = await response.json();
 
-            if (!respuesta.ok) {
+            if (!response.ok) {
                 throw new Error(data.message || 'No se pudo completar el registro.');
             }
 
@@ -62,7 +62,7 @@ export function Register() {
         } catch (err: any) {
             setError(err.message || 'Ocurrió un error inesperado al registrar la cuenta.');
         } finally {
-            setCargando(false);
+            setLoading(false);
         }
     };
 
@@ -94,8 +94,8 @@ export function Register() {
                             type="text"
                             placeholder="Juan"
                             className="form-input"
-                            value={nombre}
-                            onChange={(e) => setNombre(e.target.value)}
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
                             required
                         />
                     </div>
@@ -107,8 +107,8 @@ export function Register() {
                             type="text"
                             placeholder="Pérez"
                             className="form-input"
-                            value={apellido}
-                            onChange={(e) => setApellido(e.target.value)}
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
                             required
                         />
                     </div>
@@ -133,33 +133,42 @@ export function Register() {
                             type="password"
                             placeholder="Mínimo 6 caracteres"
                             className="form-input"
-                            value={contrasenia}
-                            onChange={(e) => setContrasenia(e.target.value)}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             required
                         />
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="reg-confirm-password" className="form-label">Confirmar Contraseña</label>
+                        <label htmlFor="reg-confirm" className="form-label">Confirmar Contraseña</label>
                         <input
-                            id="reg-confirm-password"
+                            id="reg-confirm"
                             type="password"
                             placeholder="Repite tu contraseña"
                             className="form-input"
-                            value={confirmarContrasenia}
-                            onChange={(e) => setConfirmarContrasenia(e.target.value)}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
                             required
                         />
                     </div>
 
-                    <button type="submit" className="btn-submit" disabled={cargando}>
-                        {cargando ? 'Registrando...' : 'Registrarse'}
+                    <button
+                        type="submit"
+                        className="btn-submit"
+                        disabled={loading}
+                    >
+                        {loading ? 'Registrando...' : 'Registrarse'}
                     </button>
                 </form>
 
-                <p className="auth-footer">
-                    ¿Ya tienes una cuenta? <Link to="/login" className="auth-link">Inicia sesión aquí</Link>
-                </p>
+                <div className="auth-footer">
+                    <p>
+                        ¿Ya tienes una cuenta?{' '}
+                        <Link to="/login" className="auth-link">
+                            Inicia sesión
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );

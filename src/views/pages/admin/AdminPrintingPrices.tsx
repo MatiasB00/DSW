@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/apiFetch';
 import { PRINTING_SIZES } from '../../../shared/printingSizes';
-import './Adminpreciosimpresiones.css';
+import './AdminPrintingPrices.css';
 
-interface PrecioImpresion {
+export interface PrintingPrice {
     fechaDesde: string;
     tamanio: string;
     precioTamanio: number | string;
@@ -12,7 +12,7 @@ interface PrecioImpresion {
     factorGanancia: number | string;
 }
 
-interface FormPrecio {
+export interface PriceFormData {
     tamanio: string;
     precioTamanio: string;
     precioByN: string;
@@ -20,7 +20,7 @@ interface FormPrecio {
     factorGanancia: string;
 }
 
-const formularioVacio: FormPrecio = {
+const emptyFormData: PriceFormData = {
     tamanio: '',
     precioTamanio: '',
     precioByN: '',
@@ -28,76 +28,76 @@ const formularioVacio: FormPrecio = {
     factorGanancia: '1',
 };
 
-function formatearImporte(value: number | string): string {
+function formatAmount(value: number | string): string {
     return Number(value).toFixed(2);
 }
 
-export function AdminPreciosImpresiones() {
-    const [precios, setPrecios] = useState<PrecioImpresion[]>([]);
-    const [formulario, setFormulario] = useState<FormPrecio>(formularioVacio);
-    const [precioEditado, setPrecioEditado] = useState<PrecioImpresion | null>(null);
-    const [cargando, setCargando] = useState(true);
-    const [guardando, setGuardando] = useState(false);
+export function AdminPrintingPrices() {
+    const [prices, setPrices] = useState<PrintingPrice[]>([]);
+    const [formData, setFormData] = useState<PriceFormData>(emptyFormData);
+    const [editingPrice, setEditingPrice] = useState<PrintingPrice | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [mensaje, setMensaje] = useState<string | null>(null);
+    const [message, setMessage] = useState<string | null>(null);
 
-    const cargarPrecios = async () => {
-        setCargando(true);
+    const loadPrices = async () => {
+        setLoading(true);
         setError(null);
         try {
             const response = await apiFetch('/api/precios-impresiones');
             if (!response.ok) throw new Error('No se pudieron cargar los precios de impresión.');
-            setPrecios(await response.json());
+            setPrices(await response.json());
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al cargar los precios.');
         } finally {
-            setCargando(false);
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        void cargarPrecios();
+        void loadPrices();
     }, []);
 
-    const iniciarEdicion = (precio: PrecioImpresion) => {
-        setPrecioEditado(precio);
-        setFormulario({
-            tamanio: precio.tamanio,
-            precioTamanio: String(precio.precioTamanio),
-            precioByN: String(precio.precioByN),
-            precioColor: String(precio.precioColor),
-            factorGanancia: String(precio.factorGanancia),
+    const startEdit = (price: PrintingPrice) => {
+        setEditingPrice(price);
+        setFormData({
+            tamanio: price.tamanio,
+            precioTamanio: String(price.precioTamanio),
+            precioByN: String(price.precioByN),
+            precioColor: String(price.precioColor),
+            factorGanancia: String(price.factorGanancia),
         });
         setError(null);
-        setMensaje(null);
+        setMessage(null);
     };
 
-    const cancelarEdicion = () => {
-        setPrecioEditado(null);
-        setFormulario(formularioVacio);
+    const cancelEdit = () => {
+        setEditingPrice(null);
+        setFormData(emptyFormData);
         setError(null);
     };
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        setGuardando(true);
+        setSaving(true);
         setError(null);
-        setMensaje(null);
+        setMessage(null);
 
         const payload = {
-            tamanio: formulario.tamanio.trim(),
-            precioTamanio: Number(formulario.precioTamanio),
-            precioByN: Number(formulario.precioByN),
-            precioColor: Number(formulario.precioColor),
-            factorGanancia: Number(formulario.factorGanancia),
+            tamanio: formData.tamanio.trim(),
+            precioTamanio: Number(formData.precioTamanio),
+            precioByN: Number(formData.precioByN),
+            precioColor: Number(formData.precioColor),
+            factorGanancia: Number(formData.factorGanancia),
         };
 
         try {
-            const url = precioEditado
-                ? `/api/precios-impresiones/${encodeURIComponent(precioEditado.tamanio)}/${encodeURIComponent(precioEditado.fechaDesde)}`
+            const url = editingPrice
+                ? `/api/precios-impresiones/${encodeURIComponent(editingPrice.tamanio)}/${encodeURIComponent(editingPrice.fechaDesde)}`
                 : '/api/precios-impresiones';
             const response = await apiFetch(url, {
-                method: precioEditado ? 'PUT' : 'POST',
+                method: editingPrice ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
@@ -106,18 +106,18 @@ export function AdminPreciosImpresiones() {
                 const errorBody = await response.json().catch(() => ({}));
                 throw new Error(
                     errorBody.message ||
-                    (precioEditado ? 'No se pudo actualizar el precio.' : 'No se pudo crear el precio.'),
+                    (editingPrice ? 'No se pudo actualizar el precio.' : 'No se pudo crear el precio.'),
                 );
             }
 
-            setMensaje(precioEditado ? 'Precio actualizado. La fecha de creación se conservó.' : 'Nuevo precio creado.');
-            setPrecioEditado(null);
-            setFormulario(formularioVacio);
-            await cargarPrecios();
+            setMessage(editingPrice ? 'Precio actualizado. La fecha de creación se conservó.' : 'Nuevo precio creado.');
+            setEditingPrice(null);
+            setFormData(emptyFormData);
+            await loadPrices();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al guardar el precio.');
         } finally {
-            setGuardando(false);
+            setSaving(false);
         }
     };
 
@@ -132,21 +132,21 @@ export function AdminPreciosImpresiones() {
             </p>
 
             {error && <p className="printing-prices-message is-error" role="alert">{error}</p>}
-            {mensaje && <p className="printing-prices-message is-success" role="status">{mensaje}</p>}
+            {message && <p className="printing-prices-message is-success" role="status">{message}</p>}
 
             <form className="printing-price-form" onSubmit={handleSubmit}>
-                <h3>{precioEditado ? 'Actualizar precio' : 'Crear precio'}</h3>
-                {precioEditado && (
+                <h3>{editingPrice ? 'Actualizar precio' : 'Crear precio'}</h3>
+                {editingPrice && (
                     <p className="printing-price-created">
-                        Creado el {precioEditado.fechaDesde}; esta fecha no se puede modificar.
+                        Creado el {editingPrice.fechaDesde}; esta fecha no se puede modificar.
                     </p>
                 )}
                 <div className="printing-price-fields">
                     <label>
                         Tamaño
                         <select
-                            value={formulario.tamanio}
-                            onChange={(event) => setFormulario({ ...formulario, tamanio: event.target.value })}
+                            value={formData.tamanio}
+                            onChange={(event) => setFormData({ ...formData, tamanio: event.target.value })}
                             required
                         >
                             <option value="" disabled>Seleccionar tamaño</option>
@@ -162,8 +162,8 @@ export function AdminPreciosImpresiones() {
                             min="0"
                             max="9999999999.99"
                             step="0.01"
-                            value={formulario.precioTamanio}
-                            onChange={(event) => setFormulario({ ...formulario, precioTamanio: event.target.value })}
+                            value={formData.precioTamanio}
+                            onChange={(event) => setFormData({ ...formData, precioTamanio: event.target.value })}
                             required
                         />
                     </label>
@@ -174,8 +174,8 @@ export function AdminPreciosImpresiones() {
                             min="0"
                             max="9999999999.99"
                             step="0.01"
-                            value={formulario.precioByN}
-                            onChange={(event) => setFormulario({ ...formulario, precioByN: event.target.value })}
+                            value={formData.precioByN}
+                            onChange={(event) => setFormData({ ...formData, precioByN: event.target.value })}
                             required
                         />
                     </label>
@@ -186,8 +186,8 @@ export function AdminPreciosImpresiones() {
                             min="0"
                             max="9999999999.99"
                             step="0.01"
-                            value={formulario.precioColor}
-                            onChange={(event) => setFormulario({ ...formulario, precioColor: event.target.value })}
+                            value={formData.precioColor}
+                            onChange={(event) => setFormData({ ...formData, precioColor: event.target.value })}
                             required
                         />
                     </label>
@@ -198,18 +198,18 @@ export function AdminPreciosImpresiones() {
                             min="1"
                             max="10"
                             step="0.01"
-                            value={formulario.factorGanancia}
-                            onChange={(event) => setFormulario({ ...formulario, factorGanancia: event.target.value })}
+                            value={formData.factorGanancia}
+                            onChange={(event) => setFormData({ ...formData, factorGanancia: event.target.value })}
                             required
                         />
                     </label>
                 </div>
                 <div className="printing-price-actions">
-                    <button className="btn-save-submit" type="submit" disabled={guardando}>
-                        {guardando ? 'Guardando...' : precioEditado ? 'Guardar cambios' : 'Crear precio'}
+                    <button className="btn-save-submit" type="submit" disabled={saving}>
+                        {saving ? 'Guardando...' : editingPrice ? 'Guardar cambios' : 'Crear precio'}
                     </button>
-                    {precioEditado && (
-                        <button className="btn-cancel-action" type="button" onClick={cancelarEdicion} disabled={guardando}>
+                    {editingPrice && (
+                        <button className="btn-cancel-action" type="button" onClick={cancelEdit} disabled={saving}>
                             Cancelar
                         </button>
                     )}
@@ -217,9 +217,9 @@ export function AdminPreciosImpresiones() {
             </form>
 
             <div className="printing-prices-table-wrap">
-                {cargando ? (
+                {loading ? (
                     <p className="empty-state">Cargando precios...</p>
-                ) : precios.length === 0 ? (
+                ) : prices.length === 0 ? (
                     <p className="empty-state">Todavía no hay precios de impresión.</p>
                 ) : (
                     <table className="printing-prices-table">
@@ -235,19 +235,19 @@ export function AdminPreciosImpresiones() {
                             </tr>
                         </thead>
                         <tbody>
-                            {precios.map((precio) => (
-                                <tr key={`${precio.tamanio}-${precio.fechaDesde}`}>
-                                    <td>{precio.tamanio}</td>
-                                    <td>{precio.fechaDesde}</td>
-                                    <td>${formatearImporte(precio.precioTamanio)}</td>
-                                    <td>${formatearImporte(precio.precioByN)}</td>
-                                    <td>${formatearImporte(precio.precioColor)}</td>
-                                    <td>{formatearImporte(precio.factorGanancia)}</td>
+                            {prices.map((price) => (
+                                <tr key={`${price.tamanio}-${price.fechaDesde}`}>
+                                    <td>{price.tamanio}</td>
+                                    <td>{price.fechaDesde}</td>
+                                    <td>${formatAmount(price.precioTamanio)}</td>
+                                    <td>${formatAmount(price.precioByN)}</td>
+                                    <td>${formatAmount(price.precioColor)}</td>
+                                    <td>{formatAmount(price.factorGanancia)}</td>
                                     <td>
                                         <button
                                             className="btn-card-action btn-card-edit"
                                             type="button"
-                                            onClick={() => iniciarEdicion(precio)}
+                                            onClick={() => startEdit(price)}
                                         >
                                             Editar
                                         </button>

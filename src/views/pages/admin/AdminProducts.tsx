@@ -1,52 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/apiFetch';
-import { ProductForm, Producto } from '../../components/ProductForm';
-import { CategoriasManager } from '../../components/CategoriasManager';
-import './Adminproductos.css';
+import { ProductForm, Product } from '../../components/ProductForm';
+import { CategoriesManager } from '../../components/CategoriesManager';
+import './AdminProducts.css';
 
-interface AdminProductosProps {
+interface AdminProductsProps {
     onCountChange?: (count: number) => void;
 }
 
-export function AdminProductos({ onCountChange }: AdminProductosProps) {
-    const [productos, setProductos] = useState<Producto[]>([]);
-    const [cargandoProductos, setCargandoProductos] = useState(true);
-    const [productoAEditar, setProductoAEditar] = useState<Producto | null>(null);
-    const [versionCategorias, setVersionCategorias] = useState(0);
+export function AdminProducts({ onCountChange }: AdminProductsProps) {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loadingProducts, setLoadingProducts] = useState(true);
+    const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+    const [categoriesVersion, setCategoriesVersion] = useState(0);
 
-    const [productoHistorial, setProductoHistorial] = useState<{ id: number; nombre: string } | null>(null);
-    const [historialPrecios, setHistorialPrecios] = useState<Array<{ fechaDesde: string; valor: number | string }>>([]);
-    const [cargandoHistorial, setCargandoHistorial] = useState(false);
-    const [errorHistorial, setErrorHistorial] = useState<string | null>(null);
+    const [historyProduct, setHistoryProduct] = useState<{ id: number; nombre: string } | null>(null);
+    const [priceHistory, setPriceHistory] = useState<Array<{ fechaDesde: string; valor: number | string }>>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [historyError, setHistoryError] = useState<string | null>(null);
 
-    const cargarProductos = async () => {
-        setCargandoProductos(true);
+    const loadProducts = async () => {
+        setLoadingProducts(true);
         try {
             const response = await apiFetch('/api/productos');
             if (response.ok) {
                 const data = await response.json();
-                setProductos(data);
+                setProducts(data);
                 if (onCountChange) onCountChange(data.length);
             }
         } catch (error) {
             console.error('Error al cargar productos:', error);
         } finally {
-            setCargandoProductos(false);
+            setLoadingProducts(false);
         }
     };
 
     useEffect(() => {
-        cargarProductos();
+        loadProducts();
     }, []);
 
-    const refrescarCategorias = () => {
-        setVersionCategorias((prev) => prev + 1);
-        cargarProductos();
+    const refreshCategories = () => {
+        setCategoriesVersion((prev) => prev + 1);
+        loadProducts();
     };
 
-    const handleEliminarProducto = async (id: number, nombre: string) => {
-        const confirmar = window.confirm(`¿Estás seguro de que deseas eliminar "${nombre}"?`);
-        if (!confirmar) return;
+    const handleDeleteProduct = async (id: number, productName: string) => {
+        const confirmed = window.confirm(`¿Estás seguro de que deseas eliminar "${productName}"?`);
+        if (!confirmed) return;
 
         try {
             const response = await apiFetch(`/api/productos/${id}`, {
@@ -58,42 +58,42 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
                 throw new Error(errorData.message || 'No se pudo eliminar el producto.');
             }
 
-            if (productoAEditar?.IDProducto === id) {
-                setProductoAEditar(null);
+            if (productToEdit?.IDProducto === id) {
+                setProductToEdit(null);
             }
 
-            cargarProductos();
+            loadProducts();
         } catch (error: any) {
             alert(error.message || 'Error al eliminar el producto.');
         }
     };
 
-    const handleAbrirHistorial = async (id: number, nombre: string) => {
-        setProductoHistorial({ id, nombre });
-        setCargandoHistorial(true);
-        setErrorHistorial(null);
+    const handleOpenHistory = async (id: number, productName: string) => {
+        setHistoryProduct({ id, nombre: productName });
+        setLoadingHistory(true);
+        setHistoryError(null);
         try {
-            const respuesta = await apiFetch(`/api/productos/${id}/precios`);
-            if (!respuesta.ok) {
+            const response = await apiFetch(`/api/productos/${id}/precios`);
+            if (!response.ok) {
                 throw new Error('No se pudo obtener el historial de precios.');
             }
-            const data = await respuesta.json();
-            setHistorialPrecios(data);
+            const data = await response.json();
+            setPriceHistory(data);
         } catch (err: any) {
-            setErrorHistorial(err.message || 'Error al cargar el historial.');
+            setHistoryError(err.message || 'Error al cargar el historial.');
         } finally {
-            setCargandoHistorial(false);
+            setLoadingHistory(false);
         }
     };
 
-    const handleCerrarHistorial = () => {
-        setProductoHistorial(null);
-        setHistorialPrecios([]);
-        setErrorHistorial(null);
+    const handleCloseHistory = () => {
+        setHistoryProduct(null);
+        setPriceHistory([]);
+        setHistoryError(null);
     };
 
     useEffect(() => {
-        if (productoHistorial) {
+        if (historyProduct) {
             document.body.classList.add('modal-open');
         } else {
             document.body.classList.remove('modal-open');
@@ -102,36 +102,36 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
         return () => {
             document.body.classList.remove('modal-open');
         };
-    }, [productoHistorial]);
+    }, [historyProduct]);
 
     return (
         <>
             <ProductForm
-                productoAEditar={productoAEditar}
-                versionCategorias={versionCategorias}
-                onGuardarExito={() => {
-                    cargarProductos();
-                    setProductoAEditar(null);
+                productToEdit={productToEdit}
+                categoriesVersion={categoriesVersion}
+                onSaveSuccess={() => {
+                    loadProducts();
+                    setProductToEdit(null);
                 }}
-                onCancelarEdicion={() => setProductoAEditar(null)}
+                onCancelEdit={() => setProductToEdit(null)}
             />
 
-            <CategoriasManager onCategoriasChange={refrescarCategorias} />
+            <CategoriesManager onCategoriesChange={refreshCategories} />
 
             <section className="admin-section">
                 <div className="section-header-row">
                     <h3 className="section-title">
-                        Productos en el Catálogo ({productos.length})
+                        Productos en el Catálogo ({products.length})
                     </h3>
                 </div>
 
-                {cargandoProductos ? (
+                {loadingProducts ? (
                     <p className="empty-state">Cargando productos de la base de datos...</p>
-                ) : productos.length === 0 ? (
+                ) : products.length === 0 ? (
                     <p className="empty-state">No hay productos registrados en el catálogo aún.</p>
                 ) : (
                     <div className="products-grid">
-                        {productos.map((prod) => (
+                        {products.map((prod) => (
                             <article key={prod.IDProducto} className="product-item-card">
                                 <div>
                                     <div className="product-item-header">
@@ -167,14 +167,14 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
                                         <button
                                             type="button"
                                             className="btn-card-action btn-card-history"
-                                            onClick={() => handleAbrirHistorial(prod.IDProducto, prod.nombre)}
+                                            onClick={() => handleOpenHistory(prod.IDProducto, prod.nombre)}
                                         >
                                             Hist. de Precios
                                         </button>
                                         <button
                                             type="button"
                                             className="btn-card-action btn-card-delete"
-                                            onClick={() => handleEliminarProducto(prod.IDProducto, prod.nombre)}
+                                            onClick={() => handleDeleteProduct(prod.IDProducto, prod.nombre)}
                                         >
                                             Eliminar
                                         </button>
@@ -183,7 +183,7 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
                                             type="button"
                                             className="btn-card-action btn-card-edit btn-card-full"
                                             onClick={() => {
-                                                setProductoAEditar(prod);
+                                                setProductToEdit(prod);
                                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                             }}
                                         >
@@ -197,18 +197,18 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
                 )}
             </section>
 
-            {productoHistorial && (
-                <div className="modal-overlay" onClick={handleCerrarHistorial}>
+            {historyProduct && (
+                <div className="modal-overlay" onClick={handleCloseHistory}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <div>
                                 <h3 className="modal-title">Historial de Precios</h3>
-                                <p className="modal-subtitle">{productoHistorial.nombre}</p>
+                                <p className="modal-subtitle">{historyProduct.nombre}</p>
                             </div>
                             <button
                                 type="button"
                                 className="modal-close-icon"
-                                onClick={handleCerrarHistorial}
+                                onClick={handleCloseHistory}
                                 aria-label="Cerrar modal"
                             >
                                 &times;
@@ -216,16 +216,16 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
                         </div>
 
                         <div className="modal-body">
-                            {cargandoHistorial ? (
+                            {loadingHistory ? (
                                 <p className="empty-state">Cargando precios...</p>
-                            ) : errorHistorial ? (
-                                <p className="empty-state">{errorHistorial}</p>
-                            ) : historialPrecios.length === 0 ? (
+                            ) : historyError ? (
+                                <p className="empty-state">{historyError}</p>
+                            ) : priceHistory.length === 0 ? (
                                 <p className="empty-state">No hay registros de precios para este producto.</p>
                             ) : (
-                                historialPrecios.map((item, index) => {
-                                    const esVigente = index === 0;
-                                    const fecha = new Date(item.fechaDesde).toLocaleString('es-AR', {
+                                priceHistory.map((item, index) => {
+                                    const isCurrent = index === 0;
+                                    const formattedDate = new Date(item.fechaDesde).toLocaleString('es-AR', {
                                         day: '2-digit',
                                         month: '2-digit',
                                         year: 'numeric',
@@ -236,10 +236,10 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
                                     return (
                                         <div
                                             key={item.fechaDesde}
-                                            className={`history-item ${esVigente ? 'history-item-current' : ''}`}
+                                            className={`history-item ${isCurrent ? 'history-item-current' : ''}`}
                                         >
                                             <div className="history-item-left">
-                                                <span className="history-date">{fecha}</span>
+                                                <span className="history-date">{formattedDate}</span>
                                             </div>
                                             <div className="history-price">
                                                 ${Number(item.valor).toLocaleString('es-AR', {
@@ -257,7 +257,7 @@ export function AdminProductos({ onCountChange }: AdminProductosProps) {
                             <button
                                 type="button"
                                 className="btn-modal-close"
-                                onClick={handleCerrarHistorial}
+                                onClick={handleCloseHistory}
                             >
                                 Cerrar
                             </button>

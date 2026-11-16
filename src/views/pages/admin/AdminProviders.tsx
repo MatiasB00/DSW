@@ -1,43 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/apiFetch';
-import { ProveedoresForm, Proveedor } from '../../components/ProveedoresForm';
-import './Adminproveedores.css';
+import { ProvidersForm, Provider } from '../../components/ProvidersForm';
+import './AdminProviders.css';
 
-interface AdminProveedoresProps {
+interface AdminProvidersProps {
     onCountChange?: (count: number) => void;
 }
 
-export function AdminProveedores({ onCountChange }: AdminProveedoresProps) {
-    const [proveedores, setProveedores] = useState<Proveedor[]>([]);
-    const [cargandoProveedores, setCargandoProveedores] = useState(true);
-    const [proveedorAEditar, setProveedorAEditar] = useState<Proveedor | null>(null);
-    const [busquedaProveedor, setBusquedaProveedor] = useState('');
+export function AdminProviders({ onCountChange }: AdminProvidersProps) {
+    const [providers, setProviders] = useState<Provider[]>([]);
+    const [loadingProviders, setLoadingProviders] = useState(true);
+    const [providerToEdit, setProviderToEdit] = useState<Provider | null>(null);
+    const [searchProvider, setSearchProvider] = useState('');
 
-    const cargarProveedores = async () => {
-        setCargandoProveedores(true);
+    const loadProviders = async () => {
+        setLoadingProviders(true);
         try {
             const response = await apiFetch('/api/proveedores');
             if (response.ok) {
                 const data = await response.json();
-                setProveedores(data);
+                setProviders(data);
                 if (onCountChange) onCountChange(data.length);
             }
         } catch (error) {
             console.error('Error al cargar proveedores:', error);
         } finally {
-            setCargandoProveedores(false);
+            setLoadingProviders(false);
         }
     };
 
     useEffect(() => {
-        cargarProveedores();
+        loadProviders();
     }, []);
 
-    const handleEliminarProveedor = async (id: number, razonSocial: string) => {
-        const confirmar = window.confirm(
-            `¿Estás seguro de que deseas eliminar al proveedor "${razonSocial}"?`
+    const handleDeleteProvider = async (id: number, companyName: string) => {
+        const confirmed = window.confirm(
+            `¿Estás seguro de que deseas eliminar al proveedor "${companyName}"?`
         );
-        if (!confirmar) return;
+        if (!confirmed) return;
 
         try {
             const response = await apiFetch(`/api/proveedores/${id}`, {
@@ -51,36 +51,36 @@ export function AdminProveedores({ onCountChange }: AdminProveedoresProps) {
                 );
             }
 
-            if (proveedorAEditar?.IDProveedor === id) {
-                setProveedorAEditar(null);
+            if (providerToEdit?.IDProveedor === id) {
+                setProviderToEdit(null);
             }
 
-            cargarProveedores();
+            loadProviders();
         } catch (error: any) {
             alert(error.message || 'Error al eliminar el proveedor.');
         }
     };
 
-    const proveedoresFiltrados = proveedores.filter((prov) =>
-        prov.razonSocial.toLowerCase().includes(busquedaProveedor.toLowerCase()) ||
-        prov.cuit.includes(busquedaProveedor)
+    const filteredProviders = providers.filter((prov) =>
+        prov.razonSocial.toLowerCase().includes(searchProvider.toLowerCase()) ||
+        prov.cuit.includes(searchProvider)
     );
 
     return (
         <>
-            <ProveedoresForm
-                proveedorAEditar={proveedorAEditar}
-                onGuardarExito={() => {
-                    cargarProveedores();
-                    setProveedorAEditar(null);
+            <ProvidersForm
+                providerToEdit={providerToEdit}
+                onSaveSuccess={() => {
+                    loadProviders();
+                    setProviderToEdit(null);
                 }}
-                onCancelarEdicion={() => setProveedorAEditar(null)}
+                onCancelEdit={() => setProviderToEdit(null)}
             />
 
             <section className="admin-section">
                 <div className="section-header-row">
                     <h3 className="section-title">
-                        Proveedores Registrados ({proveedoresFiltrados.length})
+                        Proveedores Registrados ({filteredProviders.length})
                     </h3>
 
                     <div className="search-box-container">
@@ -88,25 +88,25 @@ export function AdminProveedores({ onCountChange }: AdminProveedoresProps) {
                             type="text"
                             className="search-box-input"
                             placeholder="Buscar por razón social o CUIT..."
-                            value={busquedaProveedor}
-                            onChange={(e) => setBusquedaProveedor(e.target.value)}
+                            value={searchProvider}
+                            onChange={(e) => setSearchProvider(e.target.value)}
                         />
                     </div>
                 </div>
 
-                {cargandoProveedores ? (
+                {loadingProviders ? (
                     <p className="empty-state">Cargando proveedores de la base de datos...</p>
-                ) : proveedores.length === 0 ? (
+                ) : providers.length === 0 ? (
                     <p className="empty-state">
                         No hay proveedores registrados todavía.
                     </p>
-                ) : proveedoresFiltrados.length === 0 ? (
+                ) : filteredProviders.length === 0 ? (
                     <p className="empty-state">
                         No se encontraron proveedores que coincidan con la búsqueda.
                     </p>
                 ) : (
                     <div className="suppliers-grid">
-                        {proveedoresFiltrados.map((prov) => (
+                        {filteredProviders.map((prov) => (
                             <article key={prov.IDProveedor} className="supplier-item-card">
                                 <div>
                                     <div className="supplier-item-header">
@@ -134,7 +134,7 @@ export function AdminProveedores({ onCountChange }: AdminProveedoresProps) {
                                         type="button"
                                         className="btn-card-action btn-card-edit"
                                         onClick={() => {
-                                            setProveedorAEditar(prov);
+                                            setProviderToEdit(prov);
                                             window.scrollTo({ top: 0, behavior: 'smooth' });
                                         }}
                                     >
@@ -143,7 +143,7 @@ export function AdminProveedores({ onCountChange }: AdminProveedoresProps) {
                                     <button
                                         type="button"
                                         className="btn-card-action btn-card-delete"
-                                        onClick={() => handleEliminarProveedor(prov.IDProveedor, prov.razonSocial)}
+                                        onClick={() => handleDeleteProvider(prov.IDProveedor, prov.razonSocial)}
                                     >
                                         Eliminar
                                     </button>

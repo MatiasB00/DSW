@@ -1,16 +1,16 @@
 import React from 'react';
-import './Nosotros.css';
+import './AboutUs.css';
 
-export function Nosotros() {
+export function AboutUs() {
   return (
-    <main className="nosotros-container">
-      <article className="nosotros-card">
-        <h2 className="nosotros-title">Sobre Nosotros</h2>
-        <p className="nosotros-subtitle">
+    <main className="about-container">
+      <article className="about-card">
+        <h2 className="about-title">Sobre Nosotros</h2>
+        <p className="about-subtitle">
           Tradición gráfica, tecnología moderna y compromiso mayorista.
         </p>
 
-        <div className="nosotros-content">
+        <div className="about-content">
           <p>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
             tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim

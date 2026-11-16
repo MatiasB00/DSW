@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { apiFetch } from '../lib/apiFetch';
-import './Perfil.css';
+import './Profile.css';
 
-interface PedidoItemDetalle {
+interface OrderItemDetail {
     IDProducto: number;
     nombre: string;
     cantidad: number;
@@ -11,18 +11,18 @@ interface PedidoItemDetalle {
     subtotal: number | string;
 }
 
-interface PedidoCliente {
+interface CustomerOrder {
     IDPedido: number;
     fecha: string;
     estado: string;
     total: number | string;
     tipo: 'insumo' | 'impresion';
-    items?: PedidoItemDetalle[];
+    items?: OrderItemDetail[];
 }
 
-interface PedidoDetalle {
+interface OrderDetail {
     tipo: 'insumo' | 'impresion';
-    items?: PedidoItemDetalle[];
+    items?: OrderItemDetail[];
     cantCopias?: number;
     faz?: string;
     tamanio?: string;
@@ -32,83 +32,83 @@ interface PedidoDetalle {
     observacion?: string | null;
 }
 
-export function Perfil() {
+export function Profile() {
     const location = useLocation();
-    const nuevoPedidoId = location.state?.nuevoPedidoId;
+    const newOrderId = location.state?.nuevoPedidoId;
 
-    const usuarioGuardado = localStorage.getItem('user');
-    const usuario = usuarioGuardado ? JSON.parse(usuarioGuardado) : null;
+    const savedUser = localStorage.getItem('user');
+    const user = savedUser ? JSON.parse(savedUser) : null;
 
-    const [pedidos, setPedidos] = useState<PedidoCliente[]>([]);
-    const [cargando, setCargando] = useState(true);
+    const [orders, setOrders] = useState<CustomerOrder[]>([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [pedidoAbiertoId, setPedidoAbiertoId] = useState<number | null>(null);
-    const [detallesCargados, setDetallesCargados] = useState<Record<number, PedidoDetalle>>({});
-    const [cargandoDetalleId, setCargandoDetalleId] = useState<number | null>(null);
-    const [alertaPedido, setAlertaPedido] = useState<number | null>(nuevoPedidoId || null);
+    const [openOrderId, setOpenOrderId] = useState<number | null>(null);
+    const [loadedDetails, setLoadedDetails] = useState<Record<number, OrderDetail>>({});
+    const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
+    const [orderAlert, setOrderAlert] = useState<number | null>(newOrderId || null);
 
-    const normalizarClaseEstado = (estado: string) =>
-        estado.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_');
+    const normalizeStatusClass = (status: string) =>
+        status.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_');
 
     useEffect(() => {
-        if (!usuario?.IDUsuario) {
-            setCargando(false);
+        if (!user?.IDUsuario) {
+            setLoading(false);
             return;
         }
 
-        const cargarPedidos = async () => {
+        const fetchOrders = async () => {
             try {
-                setCargando(true);
+                setLoading(true);
                 setError(null);
                 const res = await apiFetch('/api/pedidos');
                 if (!res.ok) throw new Error('No se pudieron obtener los pedidos.');
                 const data = await res.json();
-                setPedidos(data);
+                setOrders(data);
             } catch (err: any) {
                 setError(err.message || 'Error al cargar tus pedidos.');
             } finally {
-                setCargando(false);
+                setLoading(false);
             }
         };
 
-        cargarPedidos();
-    }, [usuario?.IDUsuario]);
+        fetchOrders();
+    }, [user?.IDUsuario]);
 
-    const toggleDetallePedido = async (idPedido: number) => {
-        if (pedidoAbiertoId === idPedido) {
-            setPedidoAbiertoId(null);
+    const toggleOrderDetail = async (orderId: number) => {
+        if (openOrderId === orderId) {
+            setOpenOrderId(null);
             return;
         }
 
-        setPedidoAbiertoId(idPedido);
+        setOpenOrderId(orderId);
 
-        if (detallesCargados[idPedido]) return;
+        if (loadedDetails[orderId]) return;
 
         try {
-            setCargandoDetalleId(idPedido);
-            const res = await apiFetch(`/api/pedidos/${idPedido}`);
+            setLoadingDetailId(orderId);
+            const res = await apiFetch(`/api/pedidos/${orderId}`);
             if (res.ok) {
                 const data = await res.json();
-                setDetallesCargados((prev) => ({
+                setLoadedDetails((prev) => ({
                     ...prev,
-                    [idPedido]: data,
+                    [orderId]: data,
                 }));
             }
         } catch (err) {
             console.error('Error al cargar detalle del pedido:', err);
         } finally {
-            setCargandoDetalleId(null);
+            setLoadingDetailId(null);
         }
     };
 
-    if (!usuario) {
+    if (!user) {
         return (
-            <main className="perfil-container">
-                <div className="perfil-card perfil-no-auth">
+            <main className="profile-container">
+                <div className="profile-card profile-no-auth">
                     <h2>Sesión no iniciada</h2>
                     <p>Debés iniciar sesión para ver los datos de tu cuenta y tus pedidos.</p>
-                    <Link to="/login" className="btn-perfil-primary">
+                    <Link to="/login" className="btn-profile-primary">
                         Iniciar Sesión
                     </Link>
                 </div>
@@ -117,14 +117,14 @@ export function Perfil() {
     }
 
     return (
-        <main className="perfil-container">
-            {alertaPedido && (
-                <div className="perfil-alert-success">
-                    <span>¡Tu pedido <strong>#{alertaPedido}</strong> fue registrado con éxito en nuestro sistema!</span>
+        <main className="profile-container">
+            {orderAlert && (
+                <div className="profile-alert-success">
+                    <span>¡Tu pedido <strong>#{orderAlert}</strong> fue registrado con éxito en nuestro sistema!</span>
                     <button
                         type="button"
                         className="close-alert-btn"
-                        onClick={() => setAlertaPedido(null)}
+                        onClick={() => setOrderAlert(null)}
                         aria-label="Cerrar notificación"
                     >
                         &times;
@@ -132,54 +132,54 @@ export function Perfil() {
                 </div>
             )}
 
-            <header className="perfil-header-card">
+            <header className="profile-header-card">
                 <div>
-                    <h1 className="perfil-titulo">{usuario.nombre} {usuario.apellido}</h1>
-                    <p className="perfil-meta">
-                        Email: <strong>{usuario.email}</strong>
+                    <h1 className="profile-title">{user.nombre} {user.apellido}</h1>
+                    <p className="profile-meta">
+                        Email: <strong>{user.email}</strong>
                     </p>
                 </div>
             </header>
 
-            <section className="perfil-orders-section">
-                <h2 className="perfil-orders-title">Mis Pedidos ({pedidos.length})</h2>
+            <section className="profile-orders-section">
+                <h2 className="profile-orders-title">Mis Pedidos ({orders.length})</h2>
 
-                {cargando ? (
-                    <div className="perfil-state-box">
+                {loading ? (
+                    <div className="profile-state-box">
                         <p>Cargando tus pedidos...</p>
                     </div>
                 ) : error ? (
-                    <div className="perfil-state-box perfil-state-error">
+                    <div className="profile-state-box profile-state-error">
                         <p>{error}</p>
                     </div>
-                ) : pedidos.length === 0 ? (
-                    <div className="perfil-state-box">
-                        <p className="perfil-empty-title">Aún no realizaste ningún pedido</p>
-                        <p className="perfil-empty-desc">
+                ) : orders.length === 0 ? (
+                    <div className="profile-state-box">
+                        <p className="profile-empty-title">Aún no realizaste ningún pedido</p>
+                        <p className="profile-empty-desc">
                             Explorá nuestro catálogo de insumos mayoristas para comenzar.
                         </p>
-                        <Link to="/productos" className="btn-perfil-primary">
+                        <Link to="/productos" className="btn-profile-primary">
                             Ir al Catálogo
                         </Link>
                     </div>
                 ) : (
-                    <div className="perfil-orders-list">
-                        {pedidos.map((pedido) => {
-                            const estaAbierto = pedidoAbiertoId === pedido.IDPedido;
-                            const detallePedido = detallesCargados[pedido.IDPedido];
-                            const itemsDetalle = detallePedido?.items;
-                            const estaCargandoItems = cargandoDetalleId === pedido.IDPedido;
+                    <div className="profile-orders-list">
+                        {orders.map((order) => {
+                            const isOpen = openOrderId === order.IDPedido;
+                            const orderDetail = loadedDetails[order.IDPedido];
+                            const detailItems = orderDetail?.items;
+                            const isLoadingItems = loadingDetailId === order.IDPedido;
 
                             return (
                                 <article
-                                    key={pedido.IDPedido}
-                                    className="perfil-order-card"
+                                    key={order.IDPedido}
+                                    className="profile-order-card"
                                 >
-                                    <div className="perfil-order-header">
+                                    <div className="profile-order-header">
                                         <div className="order-main-info">
-                                            <span className="order-id">Pedido #{pedido.IDPedido}</span>
+                                            <span className="order-id">Pedido #{order.IDPedido}</span>
                                             <span className="order-date">
-                                                {new Date(pedido.fecha).toLocaleDateString('es-AR', {
+                                                {new Date(order.fecha).toLocaleDateString('es-AR', {
                                                     day: '2-digit',
                                                     month: '2-digit',
                                                     year: 'numeric',
@@ -190,11 +190,11 @@ export function Perfil() {
                                         </div>
 
                                         <div className="order-status-block">
-                                            <span className={`order-status-badge status-${normalizarClaseEstado(pedido.estado)}`}>
-                                                {pedido.estado}
+                                            <span className={`order-status-badge status-${normalizeStatusClass(order.estado)}`}>
+                                                {order.estado}
                                             </span>
                                             <span className="order-total-val">
-                                                ${Number(pedido.total).toLocaleString('es-AR', {
+                                                ${Number(order.total).toLocaleString('es-AR', {
                                                     minimumFractionDigits: 2,
                                                     maximumFractionDigits: 2,
                                                 })}
@@ -202,38 +202,38 @@ export function Perfil() {
                                         </div>
                                     </div>
 
-                                    <div className="perfil-order-actions">
+                                    <div className="profile-order-actions">
                                         <button
                                             type="button"
                                             className="btn-toggle-detail"
-                                            onClick={() => toggleDetallePedido(pedido.IDPedido)}
+                                            onClick={() => toggleOrderDetail(order.IDPedido)}
                                         >
-                                            {estaAbierto ? '▲ Ocultar Detalle' : '▼ Ver Productos Comprados'}
+                                            {isOpen ? '▲ Ocultar Detalle' : '▼ Ver Productos Comprados'}
                                         </button>
                                     </div>
 
-                                    {estaAbierto && (
-                                        <div className="perfil-order-expanded">
-                                            {estaCargandoItems ? (
+                                    {isOpen && (
+                                        <div className="profile-order-expanded">
+                                            {isLoadingItems ? (
                                                 <p className="loading-items-text">Cargando productos del pedido...</p>
-                                            ) : detallePedido?.tipo === 'impresion' ? (
-                                                <div className="perfil-print-details">
-                                                    <p><strong>Tamaño:</strong> {detallePedido.tamanio}</p>
-                                                    <p><strong>Impresión:</strong> {detallePedido.tipoColor}</p>
-                                                    <p><strong>Faz:</strong> {detallePedido.faz}</p>
-                                                    <p><strong>Copias:</strong> {detallePedido.cantCopias}</p>
+                                            ) : orderDetail?.tipo === 'impresion' ? (
+                                                <div className="profile-print-details">
+                                                    <p><strong>Tamaño:</strong> {orderDetail.tamanio}</p>
+                                                    <p><strong>Impresión:</strong> {orderDetail.tipoColor}</p>
+                                                    <p><strong>Faz:</strong> {orderDetail.faz}</p>
+                                                    <p><strong>Copias:</strong> {orderDetail.cantCopias}</p>
                                                     <p>
                                                         <strong>Subtotal:</strong>{' '}
-                                                        ${Number(detallePedido.impresionSubtotal).toLocaleString('es-AR', {
+                                                        ${Number(orderDetail.impresionSubtotal).toLocaleString('es-AR', {
                                                             minimumFractionDigits: 2,
                                                             maximumFractionDigits: 2,
                                                         })}
                                                     </p>
-                                                    {detallePedido.observacion && (
-                                                        <p><strong>Observación:</strong> {detallePedido.observacion}</p>
+                                                    {orderDetail.observacion && (
+                                                        <p><strong>Observación:</strong> {orderDetail.observacion}</p>
                                                     )}
                                                 </div>
-                                            ) : itemsDetalle && itemsDetalle.length > 0 ? (
+                                            ) : detailItems && detailItems.length > 0 ? (
                                                 <div className="order-items-table-wrapper">
                                                     <table className="order-items-table">
                                                         <thead>
@@ -245,7 +245,7 @@ export function Perfil() {
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {itemsDetalle.map((item) => (
+                                                            {detailItems.map((item) => (
                                                                 <tr key={item.IDProducto}>
                                                                     <td className="item-name-cell">{item.nombre}</td>
                                                                     <td className="td-center">{item.cantidad} u.</td>

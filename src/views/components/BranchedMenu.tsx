@@ -76,7 +76,6 @@ export const BranchedMenu: React.FC<BranchedMenuProps> = ({
         return first?.children?.[0]?.value ?? '';
     });
 
-    // Sincronizar active si defaultActive cambia desde afuera (ej: al limpiar filtros)
     useEffect(() => {
         if (defaultActive !== undefined) {
             setActive(defaultActive);
