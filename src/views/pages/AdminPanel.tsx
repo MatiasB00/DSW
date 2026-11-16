@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../lib/apiFetch';
 import { AdminProducts } from './admin/AdminProducts';
 import { AdminProviders } from './admin/AdminProviders';
 import { AdminOrders } from './admin/AdminOrders';
@@ -16,6 +17,34 @@ export function AdminPanel() {
     const updateCount = (type: 'products' | 'providers' | 'orders', total: number) => {
         setCounts((prev) => ({ ...prev, [type]: total }));
     };
+
+    useEffect(() => {
+        const fetchInitialCounts = async () => {
+            try {
+                const [resProducts, resProviders, resOrders] = await Promise.all([
+                    apiFetch('/api/productos'),
+                    apiFetch('/api/proveedores'),
+                    apiFetch('/api/pedidos'),
+                ]);
+                if (resProducts.ok) {
+                    const data = await resProducts.json();
+                    updateCount('products', data.length);
+                }
+                if (resProviders.ok) {
+                    const data = await resProviders.json();
+                    updateCount('providers', data.length);
+                }
+                if (resOrders.ok) {
+                    const data = await resOrders.json();
+                    updateCount('orders', data.length);
+                }
+            } catch (err) {
+                console.error('Error al cargar conteos iniciales:', err);
+            }
+        };
+
+        void fetchInitialCounts();
+    }, []);
 
     return (
         <main className="admin-container">

@@ -5,7 +5,63 @@
   inline-size: 100%;
 }
 
+.date-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  inline-size: 100%;
+}
+
+.date-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  inline-size: 100%;
+}
+
+.date-input-group label {
+  inline-size: 52px;
+  flex-shrink: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #736257;
+  text-align: left;
+}
+
+.admin-filter-date {
+  flex: 1;
+  inline-size: 100%;
+  padding-inline: 0.85rem;
+  padding-block: 0.65rem;
+  border: 1px solid #ebdcd0;
+  border-radius: 6px;
+  background-color: #faf6f0;
+  color: #2b211b;
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.admin-filter-date:focus {
+  border-color: #b91c1c;
+  background-color: #ffffff;
+}
+
+.btn-clear-dates {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #b91c1c;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
 .admin-filter-select {
+  inline-size: 100%;
   padding-inline: 0.85rem;
   padding-block: 0.65rem;
   border: 1px solid #ebdcd0;
@@ -15,6 +71,7 @@
   font-size: 0.9rem;
   outline: none;
   cursor: pointer;
+  box-sizing: border-box;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
@@ -328,12 +385,6 @@
 }
 
 @media (min-width: 640px) {
-  .admin-orders-filters {
-    flex-direction: row;
-    align-items: center;
-    inline-size: auto;
-  }
-
   .admin-order-header {
     flex-direction: row;
     justify-content: space-between;
@@ -351,5 +402,70 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+  }
+}
+
+@media (min-width: 768px) {
+  .section-title {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .admin-orders-filters {
+    flex-direction: row;
+    align-items: center;
+    inline-size: auto;
+    gap: 0.75rem;
+    flex-wrap: nowrap;
+  }
+
+  .date-filter-container {
+    flex-direction: column;
+    gap: 0.3rem;
+    inline-size: auto;
+    flex-shrink: 0;
+  }
+
+  .date-input-group {
+    inline-size: auto;
+    gap: 0.4rem;
+  }
+
+  .date-input-group label {
+    inline-size: 46px;
+    font-size: 0.82rem;
+  }
+
+  .admin-filter-date {
+    flex: none;
+    inline-size: 135px;
+    padding-inline: 0.5rem;
+    padding-block: 0.35rem;
+    font-size: 0.82rem;
+  }
+
+  .btn-clear-dates {
+    font-size: 0.75rem;
+    margin-block-start: 0.1rem;
+  }
+
+  .admin-orders-filters .search-box-container {
+    inline-size: 190px;
+    max-inline-size: 190px;
+    flex-shrink: 1;
+  }
+
+  .admin-orders-filters .search-box-input {
+    padding-inline: 0.65rem;
+    padding-block: 0.55rem;
+    font-size: 0.85rem;
+  }
+
+  .admin-filter-select {
+    inline-size: auto;
+    padding-inline: 0.65rem;
+    padding-block: 0.55rem;
+    font-size: 0.85rem;
+    flex-shrink: 0;
   }
 }

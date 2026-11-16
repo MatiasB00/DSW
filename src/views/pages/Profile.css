@@ -80,11 +80,73 @@
     gap: 1rem;
 }
 
+.profile-orders-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-block-end: 0.5rem;
+}
+
 .profile-orders-title {
     color: #2b211b;
     font-size: 1.2rem;
     font-weight: 700;
     margin: 0;
+}
+
+.profile-date-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    inline-size: 100%;
+}
+
+.profile-date-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    inline-size: 100%;
+}
+
+.profile-date-group label {
+    inline-size: 52px;
+    flex-shrink: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #736257;
+    text-align: left;
+}
+
+.profile-filter-date {
+    flex: 1;
+    inline-size: 100%;
+    padding-inline: 0.85rem;
+    padding-block: 0.65rem;
+    border: 1px solid #ebdcd0;
+    border-radius: 6px;
+    background-color: #faf6f0;
+    color: #2b211b;
+    font-size: 0.9rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.profile-filter-date:focus {
+    border-color: #b91c1c;
+    background-color: #ffffff;
+}
+
+.btn-profile-clear-dates {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: #b91c1c;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
 }
 
 .profile-state-box {
@@ -341,6 +403,42 @@
 }
 
 @media (min-width: 640px) {
+    .profile-orders-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .profile-orders-title {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .profile-date-filter {
+        flex-direction: row;
+        align-items: center;
+        inline-size: auto;
+        gap: 0.75rem;
+    }
+
+    .profile-date-group {
+        inline-size: auto;
+        gap: 0.4rem;
+    }
+
+    .profile-date-group label {
+        inline-size: 46px;
+        font-size: 0.82rem;
+    }
+
+    .profile-filter-date {
+        flex: none;
+        inline-size: 135px;
+        padding-inline: 0.5rem;
+        padding-block: 0.35rem;
+        font-size: 0.82rem;
+    }
+
     .profile-order-header {
         flex-direction: row;
         justify-content: space-between;

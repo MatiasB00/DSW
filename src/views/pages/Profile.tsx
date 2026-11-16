@@ -42,6 +42,10 @@ export function Profile() {
     const [orders, setOrders] = useState<CustomerOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+
 
     const [openOrderId, setOpenOrderId] = useState<number | null>(null);
     const [loadedDetails, setLoadedDetails] = useState<Record<number, OrderDetail>>({});
@@ -102,6 +106,14 @@ export function Profile() {
         }
     };
 
+    const filteredOrders = orders.filter((order) => {
+        if (!order.fecha) return true;
+        const orderDate = new Date(order.fecha).toISOString().split('T')[0];
+        if (startDate && orderDate < startDate) return false;
+        if (endDate && orderDate > endDate) return false;
+        return true;
+    });
+
     if (!user) {
         return (
             <main className="profile-container">
@@ -142,7 +154,48 @@ export function Profile() {
             </header>
 
             <section className="profile-orders-section">
-                <h2 className="profile-orders-title">Mis Pedidos ({orders.length})</h2>
+                <header className="profile-orders-header">
+                    <h2 className="profile-orders-title">Mis Pedidos ({filteredOrders.length})</h2>
+
+                    {orders.length > 0 && (
+                        <div className="profile-date-filter">
+                            <div className="profile-date-group">
+                                <label htmlFor="profile-date-start">Desde:</label>
+                                <input
+                                    id="profile-date-start"
+                                    type="date"
+                                    className="profile-filter-date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="profile-date-group">
+                                <label htmlFor="profile-date-end">Hasta:</label>
+                                <input
+                                    id="profile-date-end"
+                                    type="date"
+                                    className="profile-filter-date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                />
+                            </div>
+
+                            {(startDate || endDate) && (
+                                <button
+                                    type="button"
+                                    className="btn-profile-clear-dates"
+                                    onClick={() => {
+                                        setStartDate('');
+                                        setEndDate('');
+                                    }}
+                                >
+                                    Limpiar fechas
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </header>
 
                 {loading ? (
                     <div className="profile-state-box">
@@ -162,9 +215,26 @@ export function Profile() {
                             Ir al Catálogo
                         </Link>
                     </div>
+                ) : filteredOrders.length === 0 ? (
+                    <div className="profile-state-box">
+                        <p className="profile-empty-title">No hay pedidos en el rango seleccionado</p>
+                        <p className="profile-empty-desc">
+                            Probá con otras fechas o restablecé el filtro.
+                        </p>
+                        <button
+                            type="button"
+                            className="btn-profile-primary"
+                            onClick={() => {
+                                setStartDate('');
+                                setEndDate('');
+                            }}
+                        >
+                            Restablecer fechas
+                        </button>
+                    </div>
                 ) : (
                     <div className="profile-orders-list">
-                        {orders.map((order) => {
+                        {filteredOrders.map((order) => {
                             const isOpen = openOrderId === order.IDPedido;
                             const orderDetail = loadedDetails[order.IDPedido];
                             const detailItems = orderDetail?.items;

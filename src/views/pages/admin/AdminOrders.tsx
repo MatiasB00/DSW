@@ -39,6 +39,8 @@ export function AdminOrders({ onCountChange }: AdminOrdersProps) {
     const [loadingOrders, setLoadingOrders] = useState(true);
     const [searchOrder, setSearchOrder] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('todos');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [openOrderId, setOpenOrderId] = useState<number | null>(null);
     const [loadedDetails, setLoadedDetails] = useState<Record<number, any>>({});
     const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
@@ -123,8 +125,17 @@ export function AdminOrders({ onCountChange }: AdminOrdersProps) {
 
     const filteredOrders = orders.filter((order) => {
         const matchesStatus = statusFilter === 'todos' || order.estado.toLowerCase() === statusFilter.toLowerCase();
+
+        const matchesDate = (() => {
+            if (!order.fecha) return true;
+            const orderDate = new Date(order.fecha).toISOString().split('T')[0];
+            if (startDate && orderDate < startDate) return false;
+            if (endDate && orderDate > endDate) return false;
+            return true;
+        })();
+
         const query = searchOrder.trim().toLowerCase();
-        if (!query) return matchesStatus;
+        if (!query) return matchesStatus && matchesDate;
 
         const fullName = `${order.usuarioNombre || ''} ${order.usuarioApellido || ''}`.toLowerCase();
         const email = (order.usuarioEmail || '').toLowerCase();
@@ -135,7 +146,7 @@ export function AdminOrders({ onCountChange }: AdminOrdersProps) {
             email.includes(query) ||
             id.includes(query);
 
-        return matchesStatus && matchesSearch;
+        return matchesStatus && matchesSearch && matchesDate;
     });
 
     return (
@@ -146,6 +157,41 @@ export function AdminOrders({ onCountChange }: AdminOrdersProps) {
                 </h3>
 
                 <div className="admin-orders-filters">
+                    <div className="date-filter-container">
+                        <div className="date-input-group">
+                            <label htmlFor="filter-start-date">Desde:</label>
+                            <input
+                                id="filter-start-date"
+                                type="date"
+                                className="admin-filter-date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="date-input-group">
+                            <label htmlFor="filter-end-date">Hasta:</label>
+                            <input
+                                id="filter-end-date"
+                                type="date"
+                                className="admin-filter-date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                            />
+                        </div>
+                        {(startDate || endDate) && (
+                            <button
+                                type="button"
+                                className="btn-clear-dates"
+                                onClick={() => {
+                                    setStartDate('');
+                                    setEndDate('');
+                                }}
+                            >
+                                Limpiar fechas
+                            </button>
+                        )}
+                    </div>
+
                     <div className="search-box-container">
                         <input
                             type="text"
