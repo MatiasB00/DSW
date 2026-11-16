@@ -30,22 +30,26 @@
 
 .admin-tabs-bar {
   display: flex;
-  justify-content: center;
-  gap: 0.75rem;
+  justify-content: flex-start;
+  gap: 0.65rem;
   margin-block-start: 1rem;
   overflow-x: auto;
-  padding-block-end: 0.25rem;
+  padding-block-end: 0.5rem;
+  padding-inline: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .admin-tab-btn {
+  flex-shrink: 0;
   background-color: #faf6f0;
   border: 1px solid #ebdcd0;
   color: #736257;
-  padding-inline: 1.35rem;
-  padding-block: 0.7rem;
+  padding-inline: 1.15rem;
+  padding-block: 0.65rem;
   border-radius: 8px;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -137,5 +141,16 @@
 @media (min-width: 768px) {
   .admin-container {
     padding-inline: 2rem;
+  }
+
+  .admin-tabs-bar {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .admin-tab-btn {
+    padding-inline: 1.35rem;
+    padding-block: 0.7rem;
+    font-size: 0.95rem;
   }
 }
