@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/apiFetch';
 import { ProductForm, Product } from '../../components/ProductForm';
 import { CategoriesManager } from '../../components/CategoriesManager';
+import { ConfirmModal } from '../../components/ConfirmModal';
 import './AdminProducts.css';
 
 interface AdminProductsProps {
@@ -12,6 +13,8 @@ export function AdminProducts({ onCountChange }: AdminProductsProps) {
     const [products, setProducts] = useState<Product[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+    const [productToDelete, setProductToDelete] = useState<{ id: number; name: string } | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [categoriesVersion, setCategoriesVersion] = useState(0);
 
     const [historyProduct, setHistoryProduct] = useState<{ id: number; nombre: string } | null>(null);
@@ -44,11 +47,9 @@ export function AdminProducts({ onCountChange }: AdminProductsProps) {
         loadProducts();
     };
 
-    const handleDeleteProduct = async (id: number, productName: string) => {
-        const confirmed = window.confirm(`¿Estás seguro de que deseas eliminar "${productName}"?`);
-        if (!confirmed) return;
-
+    const executeDeleteProduct = async (id: number) => {
         try {
+            setErrorMessage(null);
             const response = await apiFetch(`/api/productos/${id}`, {
                 method: 'DELETE',
             });
@@ -64,7 +65,7 @@ export function AdminProducts({ onCountChange }: AdminProductsProps) {
 
             loadProducts();
         } catch (error: any) {
-            alert(error.message || 'Error al eliminar el producto.');
+            setErrorMessage(error.message || 'Error al eliminar el producto.');
         }
     };
 
@@ -125,6 +126,20 @@ export function AdminProducts({ onCountChange }: AdminProductsProps) {
                     </h3>
                 </div>
 
+                {errorMessage && (
+                    <div className="admin-feedback-alert error">
+                        <span>{errorMessage}</span>
+                        <button
+                            type="button"
+                            className="admin-feedback-close"
+                            onClick={() => setErrorMessage(null)}
+                            aria-label="Cerrar notificación"
+                        >
+                            &times;
+                        </button>
+                    </div>
+                )}
+
                 {loadingProducts ? (
                     <p className="empty-state">Cargando productos de la base de datos...</p>
                 ) : products.length === 0 ? (
@@ -174,7 +189,7 @@ export function AdminProducts({ onCountChange }: AdminProductsProps) {
                                         <button
                                             type="button"
                                             className="btn-card-action btn-card-delete"
-                                            onClick={() => handleDeleteProduct(prod.IDProducto, prod.nombre)}
+                                            onClick={() => setProductToDelete({ id: prod.IDProducto, name: prod.nombre })}
                                         >
                                             Eliminar
                                         </button>
@@ -265,6 +280,21 @@ export function AdminProducts({ onCountChange }: AdminProductsProps) {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={Boolean(productToDelete)}
+                title="Eliminar Producto"
+                message={`¿Estás seguro de que deseas eliminar "${productToDelete?.name}"? Esta acción no se puede deshacer.`}
+                confirmText="Eliminar Producto"
+                isDestructive={true}
+                onCancel={() => setProductToDelete(null)}
+                onConfirm={async () => {
+                    if (productToDelete) {
+                        await executeDeleteProduct(productToDelete.id);
+                        setProductToDelete(null);
+                    }
+                }}
+            />
         </>
     );
 }

@@ -22,8 +22,10 @@ export function Cart() {
     const handleConfirmOrder = async () => {
         setOrderError(null);
         if (!localStorage.getItem('token')) {
-            alert('Debés iniciar sesión para confirmar tu pedido.');
-            navigate('/login');
+            setOrderError('Debés iniciar sesión para confirmar tu pedido.');
+            setTimeout(() => {
+                navigate('/login');
+            }, 1200);
             return;
         }
         if (items.length === 0) return;

@@ -46,6 +46,7 @@ export function AdminOrders({ onCountChange }: AdminOrdersProps) {
     const [loadingDetailId, setLoadingDetailId] = useState<number | null>(null);
     const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const normalizeStatusClass = (status: string) =>
         status.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_');
@@ -73,6 +74,7 @@ export function AdminOrders({ onCountChange }: AdminOrdersProps) {
     const handleChangeStatus = async (orderId: number, newStatus: string) => {
         try {
             setUpdatingStatusId(orderId);
+            setErrorMessage(null);
             const res = await apiFetch(`/api/pedidos/${orderId}/estado`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -90,7 +92,8 @@ export function AdminOrders({ onCountChange }: AdminOrdersProps) {
             setSuccessMessage(`Estado del Pedido #${orderId} actualizado a "${newStatus}".`);
             setTimeout(() => setSuccessMessage(null), 3500);
         } catch (error: any) {
-            alert(error.message || 'Error al actualizar el estado del pedido.');
+            setErrorMessage(error.message || 'Error al actualizar el estado del pedido.');
+            setTimeout(() => setErrorMessage(null), 4000);
         } finally {
             setUpdatingStatusId(null);
         }
@@ -222,6 +225,20 @@ export function AdminOrders({ onCountChange }: AdminOrdersProps) {
                         type="button"
                         className="close-alert-btn"
                         onClick={() => setSuccessMessage(null)}
+                        aria-label="Cerrar notificación"
+                    >
+                        &times;
+                    </button>
+                </div>
+            )}
+
+            {errorMessage && (
+                <div className="admin-order-alert-error">
+                    <span>{errorMessage}</span>
+                    <button
+                        type="button"
+                        className="close-alert-btn"
+                        onClick={() => setErrorMessage(null)}
                         aria-label="Cerrar notificación"
                     >
                         &times;

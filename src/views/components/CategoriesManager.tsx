@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/apiFetch';
+import { ConfirmModal } from './ConfirmModal';
 import './CategoriesManager.css';
 
 export interface Category {
@@ -15,6 +16,7 @@ export function CategoriesManager({ onCategoriesChange }: CategoriesManagerProps
     const [categories, setCategories] = useState<Category[]>([]);
     const [name, setName] = useState('');
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -84,10 +86,7 @@ export function CategoriesManager({ onCategoriesChange }: CategoriesManagerProps
         setMessage(null);
     };
 
-    const handleDelete = async (id: number, categoryName: string) => {
-        const confirmed = window.confirm(`¿Estás seguro de que deseas eliminar la categoría "${categoryName}"? Los productos que la tengan pasarán a no tener categoría.`);
-        if (!confirmed) return;
-
+    const executeDelete = async (id: number) => {
         try {
             const res = await apiFetch(`/api/categorias/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('No se pudo eliminar la categoría.');
@@ -98,7 +97,7 @@ export function CategoriesManager({ onCategoriesChange }: CategoriesManagerProps
             loadCategories();
             if (onCategoriesChange) onCategoriesChange();
         } catch (err: any) {
-            alert(err.message || 'Error al eliminar.');
+            setMessage({ type: 'error', text: err.message || 'Error al eliminar la categoría.' });
         }
     };
 
@@ -176,7 +175,7 @@ export function CategoriesManager({ onCategoriesChange }: CategoriesManagerProps
                                     <button
                                         type="button"
                                         className="btn-chip-action btn-chip-delete"
-                                        onClick={() => handleDelete(cat.IDCategoria, cat.nombre)}
+                                        onClick={() => setCategoryToDelete(cat)}
                                         title="Eliminar categoría"
                                     >
                                         &times;
@@ -187,6 +186,21 @@ export function CategoriesManager({ onCategoriesChange }: CategoriesManagerProps
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={Boolean(categoryToDelete)}
+                title="Eliminar Categoría"
+                message={`¿Estás seguro de que deseas eliminar la categoría "${categoryToDelete?.nombre}"? Los productos que la tengan pasarán a no tener categoría.`}
+                confirmText="Eliminar Categoría"
+                isDestructive={true}
+                onCancel={() => setCategoryToDelete(null)}
+                onConfirm={async () => {
+                    if (categoryToDelete) {
+                        await executeDelete(categoryToDelete.IDCategoria);
+                        setCategoryToDelete(null);
+                    }
+                }}
+            />
         </article>
     );
 }

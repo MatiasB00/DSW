@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/apiFetch';
 import { ProvidersForm, Provider } from '../../components/ProvidersForm';
+import { ConfirmModal } from '../../components/ConfirmModal';
 import './AdminProviders.css';
 
 interface AdminProvidersProps {
@@ -11,6 +12,8 @@ export function AdminProviders({ onCountChange }: AdminProvidersProps) {
     const [providers, setProviders] = useState<Provider[]>([]);
     const [loadingProviders, setLoadingProviders] = useState(true);
     const [providerToEdit, setProviderToEdit] = useState<Provider | null>(null);
+    const [providerToDelete, setProviderToDelete] = useState<{ id: number; name: string } | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [searchProvider, setSearchProvider] = useState('');
 
     const loadProviders = async () => {
@@ -33,13 +36,9 @@ export function AdminProviders({ onCountChange }: AdminProvidersProps) {
         loadProviders();
     }, []);
 
-    const handleDeleteProvider = async (id: number, companyName: string) => {
-        const confirmed = window.confirm(
-            `¿Estás seguro de que deseas eliminar al proveedor "${companyName}"?`
-        );
-        if (!confirmed) return;
-
+    const executeDeleteProvider = async (id: number) => {
         try {
+            setErrorMessage(null);
             const response = await apiFetch(`/api/proveedores/${id}`, {
                 method: 'DELETE',
             });
@@ -57,7 +56,7 @@ export function AdminProviders({ onCountChange }: AdminProvidersProps) {
 
             loadProviders();
         } catch (error: any) {
-            alert(error.message || 'Error al eliminar el proveedor.');
+            setErrorMessage(error.message || 'Error al eliminar el proveedor.');
         }
     };
 
@@ -93,6 +92,20 @@ export function AdminProviders({ onCountChange }: AdminProvidersProps) {
                         />
                     </div>
                 </div>
+
+                {errorMessage && (
+                    <div className="admin-feedback-alert error">
+                        <span>{errorMessage}</span>
+                        <button
+                            type="button"
+                            className="admin-feedback-close"
+                            onClick={() => setErrorMessage(null)}
+                            aria-label="Cerrar notificación"
+                        >
+                            &times;
+                        </button>
+                    </div>
+                )}
 
                 {loadingProviders ? (
                     <p className="empty-state">Cargando proveedores de la base de datos...</p>
@@ -143,7 +156,7 @@ export function AdminProviders({ onCountChange }: AdminProvidersProps) {
                                     <button
                                         type="button"
                                         className="btn-card-action btn-card-delete"
-                                        onClick={() => handleDeleteProvider(prov.IDProveedor, prov.razonSocial)}
+                                        onClick={() => setProviderToDelete({ id: prov.IDProveedor, name: prov.razonSocial })}
                                     >
                                         Eliminar
                                     </button>
@@ -153,6 +166,21 @@ export function AdminProviders({ onCountChange }: AdminProvidersProps) {
                     </div>
                 )}
             </section>
+
+            <ConfirmModal
+                isOpen={Boolean(providerToDelete)}
+                title="Eliminar Proveedor"
+                message={`¿Estás seguro de que deseas eliminar al proveedor "${providerToDelete?.name}"? Esta acción no se puede deshacer.`}
+                confirmText="Eliminar Proveedor"
+                isDestructive={true}
+                onCancel={() => setProviderToDelete(null)}
+                onConfirm={async () => {
+                    if (providerToDelete) {
+                        await executeDeleteProvider(providerToDelete.id);
+                        setProviderToDelete(null);
+                    }
+                }}
+            />
         </>
     );
 }
